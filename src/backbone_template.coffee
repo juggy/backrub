@@ -4,6 +4,7 @@ Backbone.Template =
   #
   getPath : (path, base)->
     base = base || window
+    throw "Path is undefined or null" if !path
     parts = path.split(".")
     _.each parts, (p)->
       base = base[p]
@@ -58,10 +59,10 @@ Backbone.Template =
       model_info.model.bind "change:#{model_info.attr}", view.rerender
       #setup the render to check for truth of the value
       view.render = ->
-        fn = if Backbone.Template.resolveValue @attr, @model then context else context.inverse
-        @span fn(@model)
+        fn = if Backbone.Template.resolveValue( @attr, @model ) then context else context.inverse
+        new Handlebars.SafeString @span( fn(@model) )
     
-      new Handlebars.SafeString view.render()
+      view.render()
     else
       throw "No block is provided!"
 
@@ -74,7 +75,7 @@ Backbone.Template =
     tagName : "span"
     live : -> $("[data-bvid='#{@bbid}']")
     initialize: -> 
-      _.bindAll this, "render", "rerender"
+      _.bindAll this, "render", "rerender", "span", "live", "value"
       @bbid = "bv-#{jQuery.uuid++}"
       @attr = @options.attr
     value: ->
@@ -82,9 +83,9 @@ Backbone.Template =
     span: (inner)->
       "<span data-bvid=\"#{@bbid}\">#{inner}</span>"
     rerender : -> 
-      @live().replaceWith @render()
+      @live().replaceWith @render().string
     render  : -> 
-      @span @value()
+      new Handlebars.SafeString @span( @value() )
 
 
 #
@@ -99,10 +100,19 @@ Backbone.Template =
 Handlebars.registerHelper "view", (viewName, context)->
   view = Backbone.Template.getPath(viewName)
   v = new view(context.hash)
+  
+  _createTag =(content)->
+    tag = "<#{@el.tagName}"
+    for attr in @el.attributes
+      tag += " #{attr.name}=\"#{attr.value}\""
+    tag += ">#{content}"
+    tag + "</#{@el.tagName}>"
+  
   v.render = ()-> 
-    rendered = context(@)
+    rendered = _.bind( _createTag, @)( context(@))
     @trigger "rendered"
-    return rendered
+    console.log rendered
+    new Handlebars.SafeString rendered
   v.render(v)
   
 
@@ -198,22 +208,21 @@ Handlebars.registerHelper "boundEach", (attr, context)->
     mview.render = ()-> @span context(@)
     return mview
   
-  setup = (c) ->
-    collection.each (m)->
+  setup = (col, mainView, childViews) ->
+    col.each (m)->
       mview = item_view m
-      views[m.cid] = mview
+      childViews[m.cid] = mview
 
-    view.render = ->
-      rendered = _.map views, (v)->
+    mainView.render = ->
+      rendered = _.map childViews, (v)->
         v.render()
-      
       new Handlebars.SafeString @span( rendered.join("\n") )
   
-  setup(collection)
+  setup(collection, view, views)
   
   collection.bind "refresh", ()->
     views = {}
-    setup(collection)
+    setup(collection, view, views)
     view.rerender()
   collection.bind "add", (m)->
     mview = item_view m
