@@ -75,18 +75,33 @@ Backbone.Template =
     tagName : "span"
     live : -> $("[data-bvid='#{@bbid}']")
     initialize: -> 
-      _.bindAll this, "render", "rerender", "span", "live", "value"
+      _.bindAll this, "render", "rerender", "span", "live", "value", "textAttributes"
       @bbid = "bv-#{jQuery.uuid++}"
       @attr = @options.attr
     value: ->
       Backbone.Template.resolveValue @attr, @model
+    textAttributes: ->
+      return @renderedAttributes if @renderedAttributes
+      @attributes = @attributes || @options.attributes || {}
+      @attributes.id = @id if !(@attributes.id) && @id
+      @attributes.class = @className if !@attributes.class && @className
+      attr = _.map @attributes, (v, k)->
+        "#{k}=\"#{v}\""
+      @renderedAttributes = attr.join(" ")
     span: (inner)->
-      "<span data-bvid=\"#{@bbid}\">#{inner}</span>"
+      "<#{@tagName} #{@textAttributes()} data-bvid=\"#{@bbid}\">#{inner}</#{@tagName}>"
     rerender : -> 
       @live().replaceWith @render().string
     render  : -> 
       new Handlebars.SafeString @span( @value() )
 
+  createView : (viewProto, options)->
+    v = new viewProto(options)
+    throw "Cannot instantiate view" if !v
+    v.span = Backbone.Template._BindView.prototype.span
+    v.textAttributes = Backbone.Template._BindView.prototype.textAttributes
+    v.bbid = jQuery.uuid++
+    return v
 
 #
 # View helper
@@ -99,19 +114,11 @@ Backbone.Template =
 #
 Handlebars.registerHelper "view", (viewName, context)->
   view = Backbone.Template.getPath(viewName)
-  v = new view(context.hash)
-  
-  _createTag =(content)->
-    tag = "<#{@el.tagName}"
-    for attr in @el.attributes
-      tag += " #{attr.name}=\"#{attr.value}\""
-    tag += ">#{content}"
-    tag + "</#{@el.tagName}>"
+  v = Backbone.Template.createView view, context.hash
   
   v.render = ()-> 
-    rendered = _.bind( _createTag, @)( context(@))
+    rendered = @span context(@)
     @trigger "rendered"
-    console.log rendered
     new Handlebars.SafeString rendered
   v.render(v)
   
@@ -190,20 +197,55 @@ Handlebars.registerHelper "boundUnless", (attr, context)->
 # of what to refresh.
 # Do not know what will happen with sorting...
 #
-Handlebars.registerHelper "boundEach", (attr, context)->
+Handlebars.registerHelper "collection", (attr, context)->
   collection = Backbone.Template.resolveValue attr, this
   if not collection.each?
     throw "not a backbone collection!"
   
-  view = new Backbone.Template._BindView
-    attr  : attr
-    model : this
+  options = context.hash
+  colViewPath = options?.colView
+  colView = Backbone.Template.getPath(colViewPath) if colViewPath
+  colTagName = options?.colTag || "ul"
+  
+  itemViewPath = options?.itemView
+  itemView = Backbone.Template.getPath(itemViewPath) if itemViewPath
+  itemTagName = options?.itemTag || "li"
+  
+  #filter col/items arguments
+  colAtts = {}
+  itemAtts = {}
+  _.each options, (v, k) ->
+    return if k.indexOf("Tag") > 0 or k.indexOf("View") > 0
+    if k.indexOf( "col") is 0
+      colAtts[k.substring(3).toLowerCase()] = v
+    else if k.indexOf( "item" ) is 0
+      itemAtts[k.substring(4).toLowerCase()] = v
+  
+  view = if colView 
+    Backbone.Template.createView colView, 
+      model: collection
+      attributes: colAtts
+      tagName : if options?.colTag then colTagName else colView.prototype.tagName
+  else
+    new Backbone.Template._BindView
+      tagName: colTagName
+      attributes: colAtts
+      attr  : attr
+      model : this
   
   views = {}
   
   item_view = (m)->
-    mview = new Backbone.Template._BindView
-      model: m
+    mview = if itemView
+      Backbone.Template.createView itemView, 
+        model: m
+        attributes: itemAtts
+        tagName : if options?.itemTag then itemTagName else itemView.prototype.tagName
+    else
+      new Backbone.Template._BindView
+        tagName: itemTagName
+        attributes: itemAtts
+        model: m
     #render the single view
     mview.render = ()-> @span context(@)
     return mview

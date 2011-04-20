@@ -1,7 +1,7 @@
 (function() {
-  var simple_bind_each_template, simple_bind_template;
+  var simple_bind_template, simple_bindattr_template;
   simple_bind_template = '{{bind "@attribute_1"}}';
-  simple_bind_each_template = '<ul>{{#boundEach "collection"}}<li>{{bind "@attribute"}}</li>{{/boundEach}}</ul>';
+  simple_bindattr_template = '<span {{bindAttr class="@attribute_6"}}></span>';
   describe("bind", function() {
     beforeEach(function() {
       var t;
@@ -22,50 +22,24 @@
       return expect($("span[data-bvid]")).toHaveText(this.model.get("attribute_1"));
     });
   });
-  describe("boundEach", function() {
-    var compareToCollection;
-    compareToCollection = function(collection) {
-      var p;
-      expect($("ul > span[data-bvid]").length).toEqual(1);
-      expect($("ul li > span[data-bvid]").length).toEqual(collection.size());
-      p = 0;
-      return collection.each(function(m) {
-        return expect($($("ul li > span[data-bvid]")[p++])).toHaveText(m.get("attribute"));
-      });
-    };
+  describe("bindAttr", function() {
     beforeEach(function() {
-      var num, t;
-      t = Handlebars.compile(simple_bind_each_template);
-      this.collection = new TestCollection;
-      for (num = 0; num <= 4; num++) {
-        this.collection.add(new TestModel({
-          attribute: num
-        }));
-      }
+      var t;
+      t = Handlebars.compile(simple_bindattr_template);
+      this.model = new TestModel;
       return setFixtures(t({
-        collection: this.collection
+        model: this.model
       }));
     });
-    it("creates a span for the main collection and each items with the right content", function() {
-      return compareToCollection(this.collection);
+    it("creates attributes based on the model", function() {
+      expect($("span.class_6").length).toEqual(1);
+      return expect($("span[data-baid]").length).toEqual(1);
     });
-    it("removes elements on remove events", function() {
-      var first;
-      first = this.collection.first();
-      this.collection.remove(first);
-      return compareToCollection(this.collection);
-    });
-    it("appends elements on add events", function() {
-      this.collection.add({
-        attribute: 10
+    return it("updates the attributes on a model change", function() {
+      this.model.set({
+        attribute_6: "class_change"
       });
-      return compareToCollection(this.collection);
-    });
-    return it("refresh elements on refresh events", function() {
-      this.collection.refresh({
-        attribute: 10
-      });
-      return compareToCollection(this.collection);
+      return expect($("span.class_change").length).toEqual(1);
     });
   });
 }).call(this);

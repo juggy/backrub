@@ -1,9 +1,5 @@
 simple_view_template = '{{#view "SimpleView" model=model}}{{bind "@attribute_1"}}{{/view}}'
 
-this.SimpleView = Backbone.View.extend
-  id: "simple_view"
-
-
 describe "view", ->
 
   beforeEach ->
