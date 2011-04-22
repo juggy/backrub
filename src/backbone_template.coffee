@@ -59,7 +59,9 @@ Template =
         model : this
       context.data.exec.addView view
       model_info = Template._resolveIsModel attr, this
-      model_info.model.bind "change:#{model_info.attr}", view.rerender
+      model_info.model.bind "change:#{model_info.attr}", ->
+        view.rerender()
+        context.data.exec.makeAlive()
       #setup the render to check for truth of the value
       view.render = ->
         fn = if Template._resolveValue( @attr, @model ) then context.fn else context.inverse
@@ -77,6 +79,7 @@ Template =
     v = new viewProto(options)
     throw "Cannot instantiate view" if !v
     v.span = Template._BindView.prototype.span
+    v.live = Template._BindView.prototype.live
     v.textAttributes = Template._BindView.prototype.textAttributes
     v.bvid = "bv-#{jQuery.uuid++}"
     return v
@@ -104,7 +107,7 @@ Template =
       @renderedAttributes = attr.join(" ")
     span: (inner)->
       "<#{@tagName} #{@textAttributes()} data-bvid=\"#{@bvid}\">#{inner}</#{@tagName}>"
-    rerender : -> 
+    rerender : ->
       @live().replaceWith @render().string
     render  : -> 
       new Handlebars.SafeString @span( @value() )
@@ -127,6 +130,8 @@ Backbone.Template = (template)->
   _.bindAll @, "addView", "render", "makeAlive"
   @compiled = Handlebars.compile( template, {data: true, stringParams: true} )
   @_createdViews = {}
+  @_aliveViews = {}
+  @_alive = false
   return @
   
 _.extend Backbone.Template.prototype, 
@@ -139,21 +144,33 @@ _.extend Backbone.Template.prototype,
   
   makeAlive: ()->
     query = []
-    _.each @_createdViews, (v, id)->
-      query.push "[data-bvid='#{id}']"
+    currentViews = @_createdViews
+    @_createdViews = {}
+    
+    _.each currentViews, (view, bvid)->
+      query.push "[data-bvid='#{bvid}']"
     
     self = @
     $(query.join ",").each ->
       el = $(@)
-      view = self._createdViews[el.attr( "data-bvid" )]
+      view = currentViews[el.attr( "data-bvid" )]
       view.el = el
       view.delegateEvents()
+      view.alive?.call(view)
+    #move alive views away for other makeAlive passes
+    _.extend @_aliveViews, currentViews
+    @_alive = true
   
   #
   # Internal API to add view to the context
   #
   addView : (view)->
     @_createdViews[view.bvid] = view
+  
+  removeView : (view)->
+    delete @_createdViews[view.bvid]
+    delete @_aliveViews[view.bvid]
+    delete view
 
 #
 # View helper
@@ -170,9 +187,7 @@ Handlebars.registerHelper "view", (viewName, context)->
   v = Template._createView view, context.hash
   execContext.addView v
   v.render = ()-> 
-    rendered = @span context(@, null, null, context.data)
-    @trigger "rendered"
-    new Handlebars.SafeString rendered
+    new Handlebars.SafeString @span( context(@, null, null, context.data) )
   v.render(v)
   
 
@@ -190,7 +205,9 @@ Handlebars.registerHelper "bind", (attrName, context)->
     model : this
   execContext.addView view
   model_info = Template._resolveIsModel attrName, this
-  model_info.model.bind "change:#{model_info.attr}", view.rerender
+  model_info.model.bind "change:#{model_info.attr}", ->
+    view.rerender()
+    execContext.makeAlive()
   new Handlebars.SafeString view.render()
 
 #
@@ -325,12 +342,15 @@ Handlebars.registerHelper "collection", (attr, context)->
     views = {}
     setup(collection, view, views)
     view.rerender()
+    execContext.makeAlive()
   collection.bind "add", (m)->
     mview = item_view m
     views[m.cid] = mview
     view.live().append(mview.render())
+    execContext.makeAlive()
   collection.bind "remove", (m)->
     mview = views[m.cid]
     mview.live().remove()
+    execContext.removeView mview
 
   view.render()
