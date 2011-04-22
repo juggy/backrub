@@ -1,7 +1,7 @@
 (function() {
   var simple_bind_template, simple_bindattr_template;
   simple_bind_template = new Backbone.Template('{{attribute_1}}');
-  simple_bindattr_template = new Backbone.Template('<span {{bindAttr class="@attribute_6"}}></span>');
+  simple_bindattr_template = new Backbone.Template('<span {{bindAttr class=attribute_6}}></span>');
   describe("bind", function() {
     beforeEach(function() {
       this.model = new TestModel;

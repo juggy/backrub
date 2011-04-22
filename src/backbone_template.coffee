@@ -119,7 +119,7 @@ Handlebars.Compiler.prototype.mustache = (mustache)->
     Template._Genuine.mustache.call(this, mustache);
 Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
   if type is 'context' 
-    "(context.model.get(\"#{name}\") ? context.model.get(\"#{name}\") : context.#{name});"
+    "(context.model.get(\"#{name}\") ? \"@#{name}\" : context.#{name});"
   else
     Template._Genuine.nameLookup.call(this, parent, name, type)
 
