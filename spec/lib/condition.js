@@ -1,8 +1,8 @@
 (function() {
   var simple_ifcondition_template, simple_unlesscondition_template;
-  simple_ifcondition_template = new Backbone.Template('{{#boundIf "@check"}}{{bind "@attribute_1"}}{{else}}{{bind "@attribute_2"}}{{/boundIf}}');
-  simple_unlesscondition_template = new Backbone.Template('{{#boundUnless "@check"}}{{bind "@attribute_1"}}{{else}}{{bind "@attribute_2"}}{{/boundUnless}}');
-  describe("boundIf", function() {
+  simple_ifcondition_template = new Backbone.Template('{{#if "@check"}}{{attribute_1}}{{else}}{{attribute_2}}{{/if}}');
+  simple_unlesscondition_template = new Backbone.Template('{{#unless "@check"}}{{attribute_1}}{{else}}{{attribute_2}}{{/unless}}');
+  describe("if", function() {
     beforeEach(function() {
       this.model = new TestModel({
         check: true
@@ -23,7 +23,7 @@
       return expect($("span > span[data-bvid]")).toHaveText(this.model.get("attribute_2"));
     });
   });
-  describe("boundUnless", function() {
+  describe("unless", function() {
     beforeEach(function() {
       this.model = new TestModel({
         check: false

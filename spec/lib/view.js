@@ -1,7 +1,7 @@
 (function() {
   describe("view", function() {
     beforeEach(function() {
-      this.template = new Backbone.Template('{{#view "SimpleView" model=model}}{{bind "@attribute_1"}}{{/view}}');
+      this.template = new Backbone.Template('{{#view "SimpleView" model=model}}{{attribute_1}}{{/view}}');
       this.model = new TestModel;
       return setFixtures(this.template.render({
         model: this.model

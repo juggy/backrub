@@ -2,7 +2,7 @@
 describe "view", ->
 
   beforeEach ->
-    @template = new Backbone.Template '{{#view "SimpleView" model=model}}{{bind "@attribute_1"}}{{/view}}'
+    @template = new Backbone.Template '{{#view "SimpleView" model=model}}{{attribute_1}}{{/view}}'
     @model = new TestModel 
     setFixtures @template.render({model: @model})
     

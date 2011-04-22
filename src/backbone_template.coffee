@@ -1,5 +1,7 @@
 Template =
-
+  _Genuine : 
+    nameLookup : Handlebars.JavaScriptCompiler.prototype.nameLookup
+    mustache : Handlebars.Compiler.prototype.mustache
   #
   # Get a path within the base object (or window if undefined)
   #
@@ -107,6 +109,20 @@ Template =
     render  : -> 
       new Handlebars.SafeString @span( @value() )
 
+Handlebars.Compiler.prototype.mustache = (mustache)->
+  if mustache.params.length || mustache.hash
+    Template._Genuine.mustache.call(this, mustache);
+  else
+    id = new Handlebars.AST.IdNode(['bind']);
+    mustache.id.string = "@#{mustache.id.string}"
+    mustache = new Handlebars.AST.MustacheNode([id].concat([mustache.id]), mustache.hash, !mustache.escaped);
+    Template._Genuine.mustache.call(this, mustache);
+Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
+  if type is 'context' 
+    "(context.model.get(\"#{name}\") ? context.model.get(\"#{name}\") : context.#{name});"
+  else
+    Template._Genuine.nameLookup.call(this, parent, name, type)
+
 Backbone.Template = (template)->
   _.bindAll @, "addView", "render", "makeAlive"
   @compiled = Handlebars.compile( template, {data: true, stringParams: true} )
@@ -131,7 +147,6 @@ _.extend Backbone.Template.prototype,
       el = $(@)
       view = self._createdViews[el.attr( "data-bvid" )]
       view.el = el
-      console.log view
       view.delegateEvents()
   
   #
@@ -214,7 +229,7 @@ Handlebars.registerHelper "bindAttr", (context)->
 # A if/else statement that will listen for changes and update
 # accordingly. Uses bind so a <span> will be created
 #
-Handlebars.registerHelper "boundIf", (attr, context )->
+Handlebars.registerHelper "if", (attr, context )->
   _.bind(Template._bindIf, this)( attr, context)
 
 #
@@ -222,7 +237,7 @@ Handlebars.registerHelper "boundIf", (attr, context )->
 # A unless/else statement that will listen for changes and update
 # accordingly. Uses bind so a <span> will be created
 #
-Handlebars.registerHelper "boundUnless", (attr, context)->
+Handlebars.registerHelper "unless", (attr, context)->
   fn = context.fn
   inverse = context.inverse
   context.fn = inverse

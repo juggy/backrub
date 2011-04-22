@@ -1,11 +1,11 @@
 (function() {
   var colitemview_change_template, coltagname_change_template, colview_change_template, itemtagname_change_template, itemview_change_template, simple_collection_template;
-  simple_collection_template = new Backbone.Template('{{#collection "collection"}}{{bind "@attribute"}}{{/collection}}');
-  coltagname_change_template = new Backbone.Template('{{#collection "collection" colTag="ol" colId="collection" }}{{bind "@attribute"}}{{/collection}}');
-  itemtagname_change_template = new Backbone.Template('{{#collection "collection" colTag="div" itemTag="span" itemClass="item" }}{{bind "@attribute"}}{{/collection}}');
-  colview_change_template = new Backbone.Template('{{#collection "collection" colView="SimpleView" itemTag="span"}}{{bind "@attribute"}}{{/collection}}');
-  itemview_change_template = new Backbone.Template('{{#collection "collection" colTag="div" colClass="col" itemView="SimpleView"}}{{bind "@attribute"}}{{/collection}}');
-  colitemview_change_template = new Backbone.Template('{{#collection "collection" colView="SimpleView" colTag="span" itemView="SimpleView"}}{{bind "@attribute"}}{{/collection}}');
+  simple_collection_template = new Backbone.Template('{{#collection "collection"}}{{attribute}}{{/collection}}');
+  coltagname_change_template = new Backbone.Template('{{#collection "collection" colTag="ol" colId="collection" }}{{attribute}}{{/collection}}');
+  itemtagname_change_template = new Backbone.Template('{{#collection "collection" colTag="div" itemTag="span" itemClass="item" }}{{attribute}}{{/collection}}');
+  colview_change_template = new Backbone.Template('{{#collection "collection" colView="SimpleView" itemTag="span"}}{{attribute}}{{/collection}}');
+  itemview_change_template = new Backbone.Template('{{#collection "collection" colTag="div" colClass="col" itemView="SimpleView"}}{{attribute}}{{/collection}}');
+  colitemview_change_template = new Backbone.Template('{{#collection "collection" colView="SimpleView" colTag="span" itemView="SimpleView"}}{{attribute}}{{/collection}}');
   describe("collection", function() {
     var compareToCollection;
     compareToCollection = function(collection, colTag, itemTag) {
