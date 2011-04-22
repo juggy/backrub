@@ -1,8 +1,9 @@
-Backbone.Template = 
+Template =
+
   #
   # Get a path within the base object (or window if undefined)
   #
-  getPath : (path, base)->
+  _getPath : (path, base)->
     base = base || window
     throw "Path is undefined or null" if !path
     parts = path.split(".")
@@ -19,10 +20,10 @@ Backbone.Template =
   # Backbone models are not plain javascript object so you cannot
   # simply follow the path, you need to call get on the model.
   #
-  resolveValue : (attr, model)->
-    model_info = Backbone.Template.resolveIsModel attr, model
+  _resolveValue : (attr, model)->
+    model_info = Template._resolveIsModel attr, model
     value = try
-      Backbone.Template.getPath model_info.attr, model_info.model
+      Template._getPath model_info.attr, model_info.model
     catch error
       null
     if model_info.is_model
@@ -36,7 +37,7 @@ Backbone.Template =
   # Determine if the attribute is a model attribute or view attribute
   # If the attribute is preceded by @ it is considered a model attr.
   #   
-  resolveIsModel : (attr, model)->
+  _resolveIsModel : (attr, model)->
     is_model = false
     attr = if attr.charAt(0) is "@"
       is_model = true
@@ -45,27 +46,38 @@ Backbone.Template =
     else
       attr
     {is_model: is_model, attr: attr, model: model}
-    
 
   #
   # Used by if and unless helpers to render the and listen changes
   #
-  bindIf : (attr, context)->
+  _bindIf : (attr, context)->
     if context 
-      view = new Backbone.Template._BindView
+      view = new Template._BindView
         attr  : attr
         model : this
-      model_info = Backbone.Template.resolveIsModel attr, this
+      context.data.exec.addView view
+      model_info = Template._resolveIsModel attr, this
       model_info.model.bind "change:#{model_info.attr}", view.rerender
       #setup the render to check for truth of the value
       view.render = ->
-        fn = if Backbone.Template.resolveValue( @attr, @model ) then context else context.inverse
-        new Handlebars.SafeString @span( fn(@model) )
+        fn = if Template._resolveValue( @attr, @model ) then context.fn else context.inverse
+        new Handlebars.SafeString @span( fn(@model, null, null, context.data) )
     
       view.render()
     else
       throw "No block is provided!"
 
+  #
+  # Create a backbone view
+  #
+  
+  _createView : (viewProto, options)->
+    v = new viewProto(options)
+    throw "Cannot instantiate view" if !v
+    v.span = Template._BindView.prototype.span
+    v.textAttributes = Template._BindView.prototype.textAttributes
+    v.bvid = "bv-#{jQuery.uuid++}"
+    return v
 
   #
   # Lightweight span based view to encapsulate the different helpers
@@ -73,13 +85,13 @@ Backbone.Template =
   #
   _BindView : Backbone.View.extend
     tagName : "span"
-    live : -> $("[data-bvid='#{@bbid}']")
+    live : -> $("[data-bvid='#{@bvid}']")
     initialize: -> 
       _.bindAll this, "render", "rerender", "span", "live", "value", "textAttributes"
-      @bbid = "bv-#{jQuery.uuid++}"
+      @bvid = "bv-#{jQuery.uuid++}"
       @attr = @options.attr
     value: ->
-      Backbone.Template.resolveValue @attr, @model
+      Template._resolveValue @attr, @model
     textAttributes: ->
       return @renderedAttributes if @renderedAttributes
       @attributes = @attributes || @options.attributes || {}
@@ -89,19 +101,44 @@ Backbone.Template =
         "#{k}=\"#{v}\""
       @renderedAttributes = attr.join(" ")
     span: (inner)->
-      "<#{@tagName} #{@textAttributes()} data-bvid=\"#{@bbid}\">#{inner}</#{@tagName}>"
+      "<#{@tagName} #{@textAttributes()} data-bvid=\"#{@bvid}\">#{inner}</#{@tagName}>"
     rerender : -> 
       @live().replaceWith @render().string
     render  : -> 
       new Handlebars.SafeString @span( @value() )
 
-  createView : (viewProto, options)->
-    v = new viewProto(options)
-    throw "Cannot instantiate view" if !v
-    v.span = Backbone.Template._BindView.prototype.span
-    v.textAttributes = Backbone.Template._BindView.prototype.textAttributes
-    v.bbid = jQuery.uuid++
-    return v
+Backbone.Template = (template)->
+  _.bindAll @, "addView", "render", "makeAlive"
+  @compiled = Handlebars.compile( template, {data: true, stringParams: true} )
+  @_createdViews = {}
+  return @
+  
+_.extend Backbone.Template.prototype, 
+  #
+  # Execute a templae given some options
+  #
+  render: (options)->
+    self = this
+    @compiled(options, null, null, {exec : @})
+  
+  makeAlive: ()->
+    query = []
+    _.each @_createdViews, (v, id)->
+      query.push "[data-bvid='#{id}']"
+    
+    self = @
+    $(query.join ",").each ->
+      el = $(@)
+      view = self._createdViews[el.attr( "data-bvid" )]
+      view.el = el
+      console.log view
+      view.delegateEvents()
+  
+  #
+  # Internal API to add view to the context
+  #
+  addView : (view)->
+    @_createdViews[view.bvid] = view
 
 #
 # View helper
@@ -113,11 +150,12 @@ Backbone.Template =
 # within the templating loop (elements are not on the document yet)
 #
 Handlebars.registerHelper "view", (viewName, context)->
-  view = Backbone.Template.getPath(viewName)
-  v = Backbone.Template.createView view, context.hash
-  
+  execContext = context.data.exec
+  view = Template._getPath(viewName)
+  v = Template._createView view, context.hash
+  execContext.addView v
   v.render = ()-> 
-    rendered = @span context(@)
+    rendered = @span context(@, null, null, context.data)
     @trigger "rendered"
     new Handlebars.SafeString rendered
   v.render(v)
@@ -131,10 +169,12 @@ Handlebars.registerHelper "view", (viewName, context)->
 # node to keep track of what to refresh.
 #
 Handlebars.registerHelper "bind", (attrName, context)->
-  view = new Backbone.Template._BindView
+  execContext = context.data.exec
+  view = new Template._BindView
     attr  : attrName
     model : this
-  model_info = Backbone.Template.resolveIsModel attrName, this
+  execContext.addView view
+  model_info = Template._resolveIsModel attrName, this
   model_info.model.bind "change:#{model_info.attr}", view.rerender
   new Handlebars.SafeString view.render()
 
@@ -153,8 +193,8 @@ Handlebars.registerHelper "bindAttr", (context)->
   _.each attrs, (v, k)->
     attr = v
     
-    model_info = Backbone.Template.resolveIsModel attr, self
-    value = Backbone.Template.resolveValue attr, self
+    model_info = Template._resolveIsModel attr, self
+    value = Template._resolveValue attr, self
     outAttrs.push "#{k}=\"#{value}\""
     
     #handle change events
@@ -164,7 +204,7 @@ Handlebars.registerHelper "bindAttr", (context)->
       if el.length is 0
         model_info.model.unbind "change#{model_info.attr}"
       else
-        el.attr k, Backbone.Template.resolveValue( attr, self)
+        el.attr k, Template._resolveValue( attr, self)
   
   outAttrs.push "data-baid=\"ba-#{id}\""
   new Handlebars.SafeString outAttrs.join(" ")
@@ -174,8 +214,8 @@ Handlebars.registerHelper "bindAttr", (context)->
 # A if/else statement that will listen for changes and update
 # accordingly. Uses bind so a <span> will be created
 #
-Handlebars.registerHelper "boundIf", (attr, context)->
-  _.bind(Backbone.Template.bindIf, this)( attr, context )
+Handlebars.registerHelper "boundIf", (attr, context )->
+  _.bind(Template._bindIf, this)( attr, context)
 
 #
 # Bounded unless
@@ -183,11 +223,12 @@ Handlebars.registerHelper "boundIf", (attr, context)->
 # accordingly. Uses bind so a <span> will be created
 #
 Handlebars.registerHelper "boundUnless", (attr, context)->
-  fn = context
-  context = context.inverse
+  fn = context.fn
+  inverse = context.inverse
+  context.fn = inverse
   context.inverse = fn
   
-  _.bind(Backbone.Template.bindIf, this)( attr, context )
+  _.bind(Template._bindIf, this)( attr, context )
 
 #
 # Bounded each
@@ -198,17 +239,18 @@ Handlebars.registerHelper "boundUnless", (attr, context)->
 # Do not know what will happen with sorting...
 #
 Handlebars.registerHelper "collection", (attr, context)->
-  collection = Backbone.Template.resolveValue attr, this
+  execContext = context.data.exec
+  collection = Template._resolveValue attr, this
   if not collection.each?
     throw "not a backbone collection!"
   
   options = context.hash
   colViewPath = options?.colView
-  colView = Backbone.Template.getPath(colViewPath) if colViewPath
+  colView = Template._getPath(colViewPath) if colViewPath
   colTagName = options?.colTag || "ul"
   
   itemViewPath = options?.itemView
-  itemView = Backbone.Template.getPath(itemViewPath) if itemViewPath
+  itemView = Template._getPath(itemViewPath) if itemViewPath
   itemTagName = options?.itemTag || "li"
   
   #filter col/items arguments
@@ -222,32 +264,34 @@ Handlebars.registerHelper "collection", (attr, context)->
       itemAtts[k.substring(4).toLowerCase()] = v
   
   view = if colView 
-    Backbone.Template.createView colView, 
+    Template._createView colView, 
       model: collection
       attributes: colAtts
       tagName : if options?.colTag then colTagName else colView.prototype.tagName
   else
-    new Backbone.Template._BindView
+    new Template._BindView
       tagName: colTagName
       attributes: colAtts
       attr  : attr
       model : this
+  execContext.addView view
   
   views = {}
   
   item_view = (m)->
     mview = if itemView
-      Backbone.Template.createView itemView, 
+      Template._createView itemView, 
         model: m
         attributes: itemAtts
         tagName : if options?.itemTag then itemTagName else itemView.prototype.tagName
     else
-      new Backbone.Template._BindView
+      new Template._BindView
         tagName: itemTagName
         attributes: itemAtts
         model: m
+    execContext.addView mview
     #render the single view
-    mview.render = ()-> @span context(@)
+    mview.render = ()-> @span context(@, null, null, context.data)
     return mview
   
   setup = (col, mainView, childViews) ->

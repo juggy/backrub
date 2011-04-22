@@ -1,12 +1,9 @@
 (function() {
-  var simple_view_template;
-  simple_view_template = '{{#view "SimpleView" model=model}}{{bind "@attribute_1"}}{{/view}}';
   describe("view", function() {
     beforeEach(function() {
-      var t;
-      t = Handlebars.compile(simple_view_template);
+      this.template = new Backbone.Template('{{#view "SimpleView" model=model}}{{bind "@attribute_1"}}{{/view}}');
       this.model = new TestModel;
-      return setFixtures(t({
+      return setFixtures(this.template.render({
         model: this.model
       }));
     });
@@ -14,6 +11,13 @@
       expect($("#simple_view").length).toEqual(1);
       return expect($("#simple_view span[data-bvid]")).toHaveText(this.model.get("attribute_1"));
     });
-    return xit("delegates events properly", function() {});
+    it("keeps track of created views", function() {
+      return expect(_.size(this.template._createdViews)).toEqual(2);
+    });
+    return it("delegates events properly", function() {
+      this.template.makeAlive();
+      $("#simple_view").click();
+      return expect($(".clicked").length).toEqual(1);
+    });
   });
 }).call(this);

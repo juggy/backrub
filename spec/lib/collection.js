@@ -1,11 +1,11 @@
 (function() {
   var colitemview_change_template, coltagname_change_template, colview_change_template, itemtagname_change_template, itemview_change_template, simple_collection_template;
-  simple_collection_template = '{{#collection "collection"}}{{bind "@attribute"}}{{/collection}}';
-  coltagname_change_template = '{{#collection "collection" colTag="ol" colId="collection" }}{{bind "@attribute"}}{{/collection}}';
-  itemtagname_change_template = '{{#collection "collection" colTag="div" itemTag="span" itemClass="item" }}{{bind "@attribute"}}{{/collection}}';
-  colview_change_template = '{{#collection "collection" colView="SimpleView" itemTag="span"}}{{bind "@attribute"}}{{/collection}}';
-  itemview_change_template = '{{#collection "collection" colTag="div" colClass="col" itemView="SimpleView"}}{{bind "@attribute"}}{{/collection}}';
-  colitemview_change_template = '{{#collection "collection" colView="SimpleView" colTag="span" itemView="SimpleView"}}{{bind "@attribute"}}{{/collection}}';
+  simple_collection_template = new Backbone.Template('{{#collection "collection"}}{{bind "@attribute"}}{{/collection}}');
+  coltagname_change_template = new Backbone.Template('{{#collection "collection" colTag="ol" colId="collection" }}{{bind "@attribute"}}{{/collection}}');
+  itemtagname_change_template = new Backbone.Template('{{#collection "collection" colTag="div" itemTag="span" itemClass="item" }}{{bind "@attribute"}}{{/collection}}');
+  colview_change_template = new Backbone.Template('{{#collection "collection" colView="SimpleView" itemTag="span"}}{{bind "@attribute"}}{{/collection}}');
+  itemview_change_template = new Backbone.Template('{{#collection "collection" colTag="div" colClass="col" itemView="SimpleView"}}{{bind "@attribute"}}{{/collection}}');
+  colitemview_change_template = new Backbone.Template('{{#collection "collection" colView="SimpleView" colTag="span" itemView="SimpleView"}}{{bind "@attribute"}}{{/collection}}');
   describe("collection", function() {
     var compareToCollection;
     compareToCollection = function(collection, colTag, itemTag) {
@@ -20,15 +20,14 @@
       });
     };
     beforeEach(function() {
-      var num, t;
-      t = Handlebars.compile(simple_collection_template);
+      var num;
       this.collection = new TestCollection;
       for (num = 0; num <= 4; num++) {
         this.collection.add(new TestModel({
           attribute: num
         }));
       }
-      return setFixtures(t({
+      return setFixtures(simple_collection_template.render({
         collection: this.collection
       }));
     });
@@ -56,15 +55,14 @@
     return describe("collection-advanced", function() {
       var useTemplate;
       useTemplate = function(template) {
-        var num, t;
-        t = Handlebars.compile(template);
+        var num;
         this.collection = new TestCollection;
         for (num = 0; num <= 4; num++) {
           this.collection.add(new TestModel({
             attribute: num
           }));
         }
-        return setFixtures(t({
+        return setFixtures(template.render({
           collection: this.collection
         }));
       };

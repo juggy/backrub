@@ -13,3 +13,7 @@ this.TestCollection = Backbone.Collection.extend
 this.SimpleView = Backbone.View.extend
   id: "simple_view"
   className: "simple"
+  events :
+    "click" : "click"
+  click : ->
+    $(@el).addClass("clicked")

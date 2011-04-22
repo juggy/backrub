@@ -14,6 +14,12 @@
   });
   this.SimpleView = Backbone.View.extend({
     id: "simple_view",
-    className: "simple"
+    className: "simple",
+    events: {
+      "click": "click"
+    },
+    click: function() {
+      return $(this.el).addClass("clicked");
+    }
   });
 }).call(this);

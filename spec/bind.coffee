@@ -1,12 +1,11 @@
-simple_bind_template = '{{bind "@attribute_1"}}'
-simple_bindattr_template = '<span {{bindAttr class="@attribute_6"}}></span>'
+simple_bind_template = new Backbone.Template '{{bind "@attribute_1"}}'
+simple_bindattr_template = new Backbone.Template '<span {{bindAttr class="@attribute_6"}}></span>'
 
 describe "bind", ->
 
   beforeEach ->
-    t = Handlebars.compile simple_bind_template
     @model = new TestModel
-    setFixtures t({model: @model})
+    setFixtures simple_bind_template.render({model: @model})
     
   it "creates a span with data-bvid and the right content", ->
     expect($("span[data-bvid]").length).toEqual 1
@@ -20,9 +19,8 @@ describe "bind", ->
 describe "bindAttr", ->
 
   beforeEach ->
-    t = Handlebars.compile simple_bindattr_template
     @model = new TestModel
-    setFixtures t({model: @model})
+    setFixtures simple_bindattr_template.render({model: @model})
 
   it "creates attributes based on the model", ->
     expect($("span.class_6").length).toEqual 1

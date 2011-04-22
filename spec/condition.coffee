@@ -1,12 +1,11 @@
-simple_ifcondition_template = '{{#boundIf "@check"}}{{bind "@attribute_1"}}{{else}}{{bind "@attribute_2"}}{{/boundIf}}'
-simple_unlesscondition_template = '{{#boundUnless "@check"}}{{bind "@attribute_1"}}{{else}}{{bind "@attribute_2"}}{{/boundUnless}}'
+simple_ifcondition_template = new Backbone.Template '{{#boundIf "@check"}}{{bind "@attribute_1"}}{{else}}{{bind "@attribute_2"}}{{/boundIf}}'
+simple_unlesscondition_template = new Backbone.Template '{{#boundUnless "@check"}}{{bind "@attribute_1"}}{{else}}{{bind "@attribute_2"}}{{/boundUnless}}'
 
 describe "boundIf", ->
 
   beforeEach ->
-    t = Handlebars.compile simple_ifcondition_template
     @model = new TestModel {check: true}
-    setFixtures t({model: @model})
+    setFixtures simple_ifcondition_template.render({model: @model})
     
   it "renders attribute_1 if check is true", ->
     expect($("span[data-bvid]").length).toEqual 2
@@ -20,9 +19,8 @@ describe "boundIf", ->
     
 describe "boundUnless", ->
   beforeEach ->
-     t = Handlebars.compile simple_unlesscondition_template
      @model = new TestModel {check: false}
-     setFixtures t({model: @model})
+     setFixtures simple_unlesscondition_template.render({model: @model})
 
   it "renders attribute_1 if check is false", ->
     expect($("span[data-bvid]").length).toEqual 2

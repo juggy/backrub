@@ -1,13 +1,11 @@
 (function() {
   var simple_bind_template, simple_bindattr_template;
-  simple_bind_template = '{{bind "@attribute_1"}}';
-  simple_bindattr_template = '<span {{bindAttr class="@attribute_6"}}></span>';
+  simple_bind_template = new Backbone.Template('{{bind "@attribute_1"}}');
+  simple_bindattr_template = new Backbone.Template('<span {{bindAttr class="@attribute_6"}}></span>');
   describe("bind", function() {
     beforeEach(function() {
-      var t;
-      t = Handlebars.compile(simple_bind_template);
       this.model = new TestModel;
-      return setFixtures(t({
+      return setFixtures(simple_bind_template.render({
         model: this.model
       }));
     });
@@ -24,10 +22,8 @@
   });
   describe("bindAttr", function() {
     beforeEach(function() {
-      var t;
-      t = Handlebars.compile(simple_bindattr_template);
       this.model = new TestModel;
-      return setFixtures(t({
+      return setFixtures(simple_bindattr_template.render({
         model: this.model
       }));
     });
