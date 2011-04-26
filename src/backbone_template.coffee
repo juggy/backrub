@@ -41,10 +41,14 @@ Template =
   #   
   _resolveIsModel : (attr, model)->
     is_model = false
-    attr = if attr.charAt(0) is "@"
+    attr = if (attr.charAt(0) is "@")
       is_model = true
       model = model.model
       attr.substring(1)
+    else if model.model and model.model.get(attr) isnt undefined
+      is_model = true
+      model = model.model
+      attr
     else
       attr
     {is_model: is_model, attr: attr, model: model}
@@ -122,7 +126,7 @@ Handlebars.Compiler.prototype.mustache = (mustache)->
     Template._Genuine.mustache.call(this, mustache);
 Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
   if type is 'context' 
-    "(context.model.get(\"#{name}\") ? \"@#{name}\" : context.#{name});"
+    "(context.model && context.model.get(\"#{name}\") != null ? \"@#{name}\" : context.#{name});"
   else
     Template._Genuine.nameLookup.call(this, parent, name, type)
 
