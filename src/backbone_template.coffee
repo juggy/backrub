@@ -27,7 +27,7 @@ Template =
     value = try
       Template._getPath model_info.attr, model_info.model
     catch error
-      null
+      model_info.attr
     if model_info.is_model
       model_info.model.get(model_info.attr)
     else if typeof( value ) is "function"
@@ -41,7 +41,7 @@ Template =
   #   
   _resolveIsModel : (attr, model)->
     is_model = false
-    attr = if (attr.charAt(0) is "@")
+    attr = if (attr.charAt?(0) is "@")
       is_model = true
       model = model.model
       attr.substring(1)
