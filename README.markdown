@@ -83,11 +83,11 @@ _bindAttr_ is used to create data-bound HTML attributes (id, class, etc.). It wi
 
 **Example:**
 
-   <div {{bindAttr class=todoClass}}>{{content}}</div>
+    <div {{bindAttr class=todoClass}}>{{content}}</div>
 
 Will give
 
-   <div class="todo">my content</div>
+    <div class="todo">my content</div>
 
 ## if/unless
 
