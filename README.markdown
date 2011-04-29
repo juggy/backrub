@@ -49,21 +49,16 @@ When the template is rendering, the different parts will be listening for Backbo
 
 **Dependable**
 
-To somewhat help with the eventing problem, I created some syntax sugar to define the dependency:
+To somewhat help with the eventing problem, I created a dependency definition:
 
-    Model = TestModel.extend({
-      initialize: function() {
-        return Backbone.Dependable(this);
-      },
-      composed: function() {
-        return this.get("attribute_1") + this.get("attribute_2");
-      }.depends({
-        "change:attribute_1": "",
-        "change:attribute_2": ""
-      })
-    });
+    Model = Backbone.Model.extend 
+      initialize: ->
+        @dependencies @,
+          "composed change:attribute_1 change:attribute_2" : ""
+          
+      composed : -> @get("attribute_1") + @get("attribute_2")
     
-You define the dependencies using an object of {"event" : base_object}. If the base is the current object use an empty string. You must call Backbone.Dependable(this) to have dependencies fulfilled.
+You define the dependencies using an object of {"attribute event" : base_object}. If the base is the current object use an empty string. 
 
 **Context**
 Handlebars has a concept of context. Each element lives within one. In the case of Backbone Templates this context is always a Backbone View. You access data in this context. 

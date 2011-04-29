@@ -7,7 +7,7 @@ Template =
   #
   _getPath : (path, base)->
     base = base || window
-    throw "Path is undefined or null" if !path && path != ""
+    throw "Path is undefined or null" if path == null or path is undefined
     parts = path.split(".")
     _.each parts, (p)->
       base = if p is "" then base else base[p]
@@ -141,13 +141,6 @@ Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
     Template._Genuine.nameLookup.call(this, parent, name, type)
 
 
-#
-# Syntax sugar to model dependencies on other object/events
-# Arguments is in the form {"event" : "object.path" , ...}
-#
-Function.prototype.depends = (onHash)->
-  @_dependsOn = onHash
-  return @
 
 #
 # Call this within the initialize function of your View, Controller, Model.
@@ -155,18 +148,24 @@ Function.prototype.depends = (onHash)->
 # dependent on some _event_ and make sure a change:attribute_name event 
 # will be trigger on the object defined by the _path_
 #
-Backbone.Dependable = (base)->
+Backbone.dependencies = (base, onHash)->
   throw "Not a Backbone.Event object" if !base.trigger and !base.bind
-  
-  setupEvent = (attr, events)->
-    for event, path of events
-      object = Template._getPath(path, base)
-      object?.bind event, ->
+  setupEvent = (event, path)->
+    parts = event.split(" ")
+    attr = parts[0]
+    object = Template._getPath(path, base)
+    for e in parts[1..]
+      object?.bind e, ->
         base.trigger "change:#{attr}"
-  
-  for key, val of base
-    setupEvent(key, val._dependsOn) if val._dependsOn
-  return base
+    
+  for event, path of onHash
+    setupEvent(event, path)
+    
+#
+# Setup dependencies in the backbone prototype for nice syntax
+#
+for proto in [Backbone.Model.prototype, Backbone.Controller.prototype, Backbone.Collection.prototype, Backbone.View.prototype]
+  _.extend proto, {dependencies: Backbone.dependencies}
 
 
 Backbone.Template = (template)->

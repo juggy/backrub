@@ -1,20 +1,18 @@
 describe "dependable", ->
   it "triggers event properly", ->
-    Model = TestModel.extend 
+    Model = Backbone.Model.extend 
+      defaults:
+        attribute_1: 1
+        attribute_2: 2
+        
       initialize: ->
-        Backbone.Dependable(@)
+        @dependencies @,
+          "composed change:attribute_1 change:attribute_2" : ""
+          "composed2 change:attribute_1 change:attribute_2" : ""
+          
         
-      composed : (->
-        @get("attribute_1") + @get("attribute_2")
-      ).depends
-        "change:attribute_1" : "" 
-        "change:attribute_2" : ""
-        
-      composed2 : (->
-        @get("attribute_1") + @get("attribute_2")
-      ).depends
-        "change:attribute_1" : "" 
-        "change:attribute_2" : ""
+      composed : -> @get("attribute_1") + @get("attribute_2")
+      composed2 : ->@get("attribute_1") + @get("attribute_2")
       
     m = new Model();
     callback = jasmine.createSpy("event")
