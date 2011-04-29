@@ -76,9 +76,10 @@ Template =
       throw "No block is provided!"
 
   #
-  # Create a backbone view
+  # Create a backbone view with the specified prototype.
+  # It adds _span_, _live_, _textAttributes_ and _bvid_ attributes
+  # to the view.
   #
-  
   _createView : (viewProto, options)->
     v = new viewProto(options)
     throw "Cannot instantiate view" if !v
@@ -116,6 +117,11 @@ Template =
     render  : -> 
       new Handlebars.SafeString @span( @value() )
 
+#
+# See handlebars code. This override mustache so that
+# it will call the bind helper to resolve single value
+# mustaches.
+#
 Handlebars.Compiler.prototype.mustache = (mustache)->
   if mustache.params.length || mustache.hash
     Template._Genuine.mustache.call(this, mustache);
@@ -124,6 +130,10 @@ Handlebars.Compiler.prototype.mustache = (mustache)->
     mustache.id.string = "@#{mustache.id.string}"
     mustache = new Handlebars.AST.MustacheNode([id].concat([mustache.id]), mustache.hash, !mustache.escaped);
     Template._Genuine.mustache.call(this, mustache);
+    
+#
+# See handlebars code.
+#
 Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
   if type is 'context' 
     "(context.model && context.model.get(\"#{name}\") != null ? \"@#{name}\" : context.#{name});"
@@ -146,7 +156,16 @@ _.extend Backbone.Template.prototype,
     self = this
     @compiled(options, null, null, {exec : @})
   
-  makeAlive: ()->
+  #
+  # Make Alive will properly handle the delgation of 
+  # events based on Backbone conventions. By default,
+  # it will use the body element to find created elements
+  # but you can also give a base element to query from.
+  # This is useful when your template is appended to a 
+  # DOM element that wasn't inserted into the page yet.
+  #
+  makeAlive: (base)->
+    base = base || $("body")
     query = []
     currentViews = @_createdViews
     @_createdViews = {}
@@ -155,7 +174,7 @@ _.extend Backbone.Template.prototype,
       query.push "[data-bvid='#{bvid}']"
     
     self = @
-    $(query.join ",").each ->
+    $(query.join( "," ), base).each ->
       el = $(@)
       view = currentViews[el.attr( "data-bvid" )]
       view.el = el
@@ -171,10 +190,30 @@ _.extend Backbone.Template.prototype,
   addView : (view)->
     @_createdViews[view.bvid] = view
   
+  #
+  # Internal API to remove view formt he tracking list
+  #
   removeView : (view)->
     delete @_createdViews[view.bvid]
     delete @_aliveViews[view.bvid]
     delete view
+
+#
+# A simple Backbone.View to wrap around the Backbone.Template API
+# You can use this view as any other view within backbone. Call
+# render as you would normally
+# 
+Backbone.TemplateView = Backbone.View.extend
+  initialize: (options)->
+    @template = @template || options.template
+    throw "Template is missing" if !@template
+    
+    @compile = new Backbone.Template(@template)
+  
+  render : ->
+    $(@el).html @compile.render @
+    @compile.makeAlive @el
+    @el
 
 #
 # View helper
@@ -289,7 +328,8 @@ Handlebars.registerHelper "collection", (attr, context)->
   itemView = Template._getPath(itemViewPath) if itemViewPath
   itemTagName = options?.itemTag || "li"
   
-  #filter col/items arguments
+  # filter col/items arguments
+  # TODO would it be possible to use bindAttr for col/item attributes
   colAtts = {}
   itemAtts = {}
   _.each options, (v, k) ->
@@ -314,6 +354,9 @@ Handlebars.registerHelper "collection", (attr, context)->
   
   views = {}
   
+  #
+  # Item view setup closure
+  #
   item_view = (m)->
     mview = if itemView
       Template._createView itemView, 
@@ -326,15 +369,26 @@ Handlebars.registerHelper "collection", (attr, context)->
         attributes: itemAtts
         model: m
     execContext.addView mview
-    #render the single view
+    
+    #
+    # Render the item view using the template
+    #
     mview.render = ()-> @span context(@, null, null, context.data)
     return mview
   
+  #
+  # Container view setup closure
+  #
   setup = (col, mainView, childViews) ->
+    # create all childs
     col.each (m)->
       mview = item_view m
       childViews[m.cid] = mview
 
+    #
+    # Rendering for the main view simply calls render of the child
+    # and wrap this with the container view element.
+    #
     mainView.render = ->
       rendered = _.map childViews, (v)->
         v.render()
@@ -343,16 +397,22 @@ Handlebars.registerHelper "collection", (attr, context)->
   setup(collection, view, views)
   
   collection.bind "refresh", ()->
+    # dump everything and resetup the view
+    # Call make alive to keep track of new views.
     views = {}
     setup(collection, view, views)
     view.rerender()
     execContext.makeAlive()
   collection.bind "add", (m)->
+    # create the new view as needed
+    # Call make alive to keep track of new views.
     mview = item_view m
     views[m.cid] = mview
     view.live().append(mview.render())
     execContext.makeAlive()
   collection.bind "remove", (m)->
+    # remove the view associated with the model
+    # Stop tracking this view.
     mview = views[m.cid]
     mview.live().remove()
     execContext.removeView mview
