@@ -47,7 +47,23 @@ It is the same as the classic Backbone example.
 
 When the template is rendering, the different parts will be listening for Backbone events on the different attributes. The events have the _change:attributeName_ form. In Backbone, those events are only sent when a value changes on a Model. When you bind a view attribute or function, you will have to trigger those change events yourself. If your _doneClass_ function on the view depends on the _model.done_ value, you should trigger a _change:doneClass_ on your view whenever a _change:done_ occurs on the model.
 
-In the future, those dependencies will be handled for you.
+**Dependable**
+
+To somewhat help with the eventing problem, I created some syntax sugar to define the dependency:
+
+    Model = TestModel.extend({
+      initialize: function() {
+        return Backbone.Dependable(this);
+      },
+      composed: function() {
+        return this.get("attribute_1") + this.get("attribute_2");
+      }.depends({
+        "change:attribute_1": "",
+        "change:attribute_2": ""
+      })
+    });
+    
+You define the dependencies using an object of {"event" : base_object}. If the base is the current object use an empty string. You must call Backbone.Dependable(this) to have dependencies fulfilled.
 
 **Context**
 Handlebars has a concept of context. Each element lives within one. In the case of Backbone Templates this context is always a Backbone View. You access data in this context. 

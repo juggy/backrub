@@ -7,10 +7,10 @@ Template =
   #
   _getPath : (path, base)->
     base = base || window
-    throw "Path is undefined or null" if !path
+    throw "Path is undefined or null" if !path && path != ""
     parts = path.split(".")
     _.each parts, (p)->
-      base = base[p]
+      base = if p is "" then base else base[p]
       if !base
         throw "cannot find given path '#{path}'"
         return {}
@@ -139,6 +139,35 @@ Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
     "(context.model && context.model.get(\"#{name}\") != null ? \"@#{name}\" : context.#{name});"
   else
     Template._Genuine.nameLookup.call(this, parent, name, type)
+
+
+#
+# Syntax sugar to model dependencies on other object/events
+# Arguments is in the form {"event" : "object.path" , ...}
+#
+Function.prototype.depends = (onHash)->
+  @_dependsOn = onHash
+  return @
+
+#
+# Call this within the initialize function of your View, Controller, Model.
+# It will look at all the attributes for _base_ that have been marked as 
+# dependent on some _event_ and make sure a change:attribute_name event 
+# will be trigger on the object defined by the _path_
+#
+Backbone.Dependable = (base)->
+  throw "Not a Backbone.Event object" if !base.trigger and !base.bind
+  
+  setupEvent = (attr, events)->
+    for event, path of events
+      object = Template._getPath(path, base)
+      object?.bind event, ->
+        base.trigger "change:#{attr}"
+  
+  for key, val of base
+    setupEvent(key, val._dependsOn) if val._dependsOn
+  return base
+
 
 Backbone.Template = (template)->
   _.bindAll @, "addView", "render", "makeAlive"
