@@ -22,10 +22,17 @@ To build the coffeescripts to javascripts use the "cake build" command and to co
 
 # How to use
 
-For general Handlebars documentation, please refer to http://handlebars.strobeapp.com/
-For general Backbone documentation, please refer to http://documentcloud.github.com/backbone/
+* For general Handlebars documentation, please refer to http://handlebars.strobeapp.com/
+* For general Backbone documentation, please refer to http://documentcloud.github.com/backbone/
 
-Otherwise to load the template, render it and make it alive (more on that later):
+The easiest way to load a tempalte is to use Backbone.TemplateView. It takes care of all the details for you and acts like your typical Backbone.View. You can even extend it to add your own personal touch.
+
+    var view = Backbone.TemplateView({model: myModel, template: '{{#view "SimpleView" model=model}}{{attribute_1}}{{/view}}' });
+    $("body").append(view.render());
+    
+If you extend the TemplateView, you can specify the _template_ attribute. You might want to change this behaviour and load the template from URL and showing a loading panel to your user.
+
+Otherwise you can load the template directly within your existing views, render it and make it alive (more on that later):
 
     var template = new Backbone.Template( '{{#view "SimpleView" model=model}}{{attribute_1}}{{/view}}' );
     $("body").append( template.render({model: new Backbone.Model}) );
@@ -35,6 +42,12 @@ And check out the complete todo example: https://github.com/juggy/backbone-templ
 It is the same as the classic Backbone example.
 
 ## Things to know
+
+**Events**
+
+When the template is rendering, the different parts will be listening for Backbone events on the different attributes. The events have the _change:attributeName_ form. In Backbone, those events are only sent when a value changes on a Model. When you bind a view attribute or function, you will have to trigger those change events yourself. If your _doneClass_ function on the view depends on the _model.done_ value, you should trigger a _change:doneClass_ on your view whenever a _change:done_ occurs on the model.
+
+In the future, those dependencies will be handled for you.
 
 **Context**
 Handlebars has a concept of context. Each element lives within one. In the case of Backbone Templates this context is always a Backbone View. You access data in this context. 
