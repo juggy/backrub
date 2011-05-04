@@ -5,16 +5,22 @@ Template =
   #
   # Get a path within the base object (or window if undefined)
   #
-  _getPath : (path, base)->
+  _getPath : (path, base, wrap)->
+    wrap = wrap || false
     base = base || window
-    throw "Path is undefined or null" if path == null or path is undefined
+    prev = base
+    throw new Error "Path is undefined or null" if path == null or path is undefined
     parts = path.split(".")
     _.each parts, (p)->
+      prev = base
       base = if p is "" then base else base[p]
       if !base
-        throw "cannot find given path '#{path}'"
+        throw new Error "cannot find given path '#{path}'"
         return {}
-    return base
+    if typeof( base ) is "function" and wrap
+      _.bind( base, prev )
+    else
+      base
 
   #
   # Resolve a value properly in the model
@@ -25,15 +31,15 @@ Template =
   _resolveValue : (attr, model)->
     model_info = Template._resolveIsModel attr, model
     value = try
-      Template._getPath model_info.attr, model_info.model
+      Template._getPath model_info.attr, model_info.model, true
     catch error
-      model_info.attr
+      #model_info.attr
     if model_info.is_model
       model_info.model.get(model_info.attr)
     else if typeof( value ) is "function"
       value()
     else
-      value
+      value || ""
 
   #
   # Determine if the attribute is a model attribute or view attribute
@@ -41,11 +47,11 @@ Template =
   #   
   _resolveIsModel : (attr, model)->
     is_model = false
-    attr = if (attr.charAt?(0) is "@")
+    attr = if attr and (attr.charAt?(0) is "@")
       is_model = true
       model = model.model
       attr.substring(1)
-    else if model.model and model.model.get(attr) isnt undefined
+    else if attr and model.model and model.model.get(attr) isnt undefined
       is_model = true
       model = model.model
       attr
@@ -64,16 +70,17 @@ Template =
       context.data.exec.addView view
       model_info = Template._resolveIsModel attr, this
       model_info.model.bind "change:#{model_info.attr}", ->
-        view.rerender()
-        context.data.exec.makeAlive()
+        if context.data.exec.isAlive()
+          view.rerender()
+          context.data.exec.makeAlive()
       #setup the render to check for truth of the value
       view.render = ->
         fn = if Template._resolveValue( @attr, @model ) then context.fn else context.inverse
-        new Handlebars.SafeString @span( fn(@model, null, null, context.data) )
+        new Handlebars.SafeString @span( fn(@model, {data:context.data}) )
     
       view.render()
     else
-      throw "No block is provided!"
+      throw new Error "No block is provided!"
 
   #
   # Create a backbone view with the specified prototype.
@@ -81,8 +88,9 @@ Template =
   # to the view.
   #
   _createView : (viewProto, options)->
+    
     v = new viewProto(options)
-    throw "Cannot instantiate view" if !v
+    throw new Error "Cannot instantiate view" if !v
     v.span = Template._BindView.prototype.span
     v.live = Template._BindView.prototype.live
     v.textAttributes = Template._BindView.prototype.textAttributes
@@ -103,13 +111,13 @@ Template =
     value: ->
       Template._resolveValue @attr, @model
     textAttributes: ->
-      return @renderedAttributes if @renderedAttributes
+      #return @renderedAttributes if @renderedAttributes
       @attributes = @attributes || @options.attributes || {}
       @attributes.id = @id if !(@attributes.id) && @id
       @attributes.class = @className if !@attributes.class && @className
       attr = _.map @attributes, (v, k)->
         "#{k}=\"#{v}\""
-      @renderedAttributes = attr.join(" ")
+      attr.join(" ")
     span: (inner)->
       "<#{@tagName} #{@textAttributes()} data-bvid=\"#{@bvid}\">#{inner}</#{@tagName}>"
     rerender : ->
@@ -136,7 +144,7 @@ Handlebars.Compiler.prototype.mustache = (mustache)->
 #
 Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
   if type is 'context' 
-    "(context.model && context.model.get(\"#{name}\") != null ? \"@#{name}\" : context.#{name});"
+    "(context.model && context.model.get(\"#{name}\") != null ? \"@#{name}\" : \"#{name}\");"
   else
     Template._Genuine.nameLookup.call(this, parent, name, type)
 
@@ -149,7 +157,7 @@ Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
 # will be trigger on the object defined by the _path_
 #
 Backbone.dependencies = (base, onHash)->
-  throw "Not a Backbone.Event object" if !base.trigger and !base.bind
+  throw new Error "Not a Backbone.Event object" if !base.trigger and !base.bind
   setupEvent = (event, path)->
     parts = event.split(" ")
     attr = parts[0]
@@ -169,7 +177,7 @@ for proto in [Backbone.Model.prototype, Backbone.Controller.prototype, Backbone.
 
 
 Backbone.Template = (template)->
-  _.bindAll @, "addView", "render", "makeAlive"
+  _.bindAll @, "addView", "render", "makeAlive", "isAlive"
   @compiled = Handlebars.compile( template, {data: true, stringParams: true} )
   @_createdViews = {}
   @_aliveViews = {}
@@ -182,7 +190,7 @@ _.extend Backbone.Template.prototype,
   #
   render: (options)->
     self = this
-    @compiled(options, null, null, {exec : @})
+    @compiled(options, {data:{exec : @}})
   
   #
   # Make Alive will properly handle the delgation of 
@@ -212,6 +220,10 @@ _.extend Backbone.Template.prototype,
     _.extend @_aliveViews, currentViews
     @_alive = true
   
+  
+  isAlive: ->
+    @_alive
+  
   #
   # Internal API to add view to the context
   #
@@ -234,13 +246,15 @@ _.extend Backbone.Template.prototype,
 Backbone.TemplateView = Backbone.View.extend
   initialize: (options)->
     @template = @template || options.template
-    throw "Template is missing" if !@template
-    
+    throw new Error "Template is missing" if !@template
     @compile = new Backbone.Template(@template)
   
   render : ->
-    $(@el).html @compile.render @
-    @compile.makeAlive @el
+    try
+      $(@el).html @compile.render @
+      @compile.makeAlive @el
+    catch e
+      console.error e.stack
     @el
 
 #
@@ -255,10 +269,14 @@ Backbone.TemplateView = Backbone.View.extend
 Handlebars.registerHelper "view", (viewName, context)->
   execContext = context.data.exec
   view = Template._getPath(viewName)
-  v = Template._createView view, context.hash
+  resolvedOptions = {}
+  for key, val of context.hash
+    resolvedOptions[key] = Template._resolveValue(val, this) || val
+
+  v = Template._createView view, resolvedOptions
   execContext.addView v
   v.render = ()-> 
-    new Handlebars.SafeString @span( context(@, null, null, context.data) )
+    new Handlebars.SafeString @span( context(@, {data:context.data}) )
   v.render(v)
   
 
@@ -274,11 +292,16 @@ Handlebars.registerHelper "bind", (attrName, context)->
   view = new Template._BindView
     attr  : attrName
     model : this
+  if context.hash
+    view.tagName = context.hash.tag || view.tagName
+    delete context.hash.tag
+    view.attributes = context.hash
   execContext.addView view
   model_info = Template._resolveIsModel attrName, this
   model_info.model.bind "change:#{model_info.attr}", ->
-    view.rerender()
-    execContext.makeAlive()
+    if execContext.isAlive()
+      view.rerender()
+      execContext.makeAlive()
   new Handlebars.SafeString view.render()
 
 #
@@ -302,12 +325,13 @@ Handlebars.registerHelper "bindAttr", (context)->
     
     #handle change events
     model_info.model.bind "change:#{model_info.attr}", ->
-      el = $("[data-baid='ba-#{id}']")
+      if context.data.exec.isAlive()
+        el = $("[data-baid='ba-#{id}']")
       
-      if el.length is 0
-        model_info.model.unbind "change#{model_info.attr}"
-      else
-        el.attr k, Template._resolveValue( attr, self)
+        if el.length is 0
+          model_info.model.unbind "change#{model_info.attr}"
+        else
+          el.attr k, Template._resolveValue( attr, self)
   
   outAttrs.push "data-baid=\"ba-#{id}\""
   new Handlebars.SafeString outAttrs.join(" ")
@@ -345,7 +369,7 @@ Handlebars.registerHelper "collection", (attr, context)->
   execContext = context.data.exec
   collection = Template._resolveValue attr, this
   if not collection.each?
-    throw "not a backbone collection!"
+    throw new Error "not a backbone collection!"
   
   options = context.hash
   colViewPath = options?.colView
@@ -401,7 +425,7 @@ Handlebars.registerHelper "collection", (attr, context)->
     #
     # Render the item view using the template
     #
-    mview.render = ()-> @span context(@, null, null, context.data)
+    mview.render = ()-> @span context(@, {data:context.data})
     return mview
   
   #
@@ -425,24 +449,27 @@ Handlebars.registerHelper "collection", (attr, context)->
   setup(collection, view, views)
   
   collection.bind "refresh", ()->
-    # dump everything and resetup the view
-    # Call make alive to keep track of new views.
-    views = {}
-    setup(collection, view, views)
-    view.rerender()
-    execContext.makeAlive()
+    if execContext.isAlive()
+      # dump everything and resetup the view
+      # Call make alive to keep track of new views.
+      views = {}
+      setup(collection, view, views)
+      view.rerender()
+      execContext.makeAlive()
   collection.bind "add", (m)->
-    # create the new view as needed
-    # Call make alive to keep track of new views.
-    mview = item_view m
-    views[m.cid] = mview
-    view.live().append(mview.render())
-    execContext.makeAlive()
+    if execContext.isAlive()
+      # create the new view as needed
+      # Call make alive to keep track of new views.
+      mview = item_view m
+      views[m.cid] = mview
+      view.live().append(mview.render())
+      execContext.makeAlive()
   collection.bind "remove", (m)->
-    # remove the view associated with the model
-    # Stop tracking this view.
-    mview = views[m.cid]
-    mview.live().remove()
-    execContext.removeView mview
+    if execContext.isAlive()
+      # remove the view associated with the model
+      # Stop tracking this view.
+      mview = views[m.cid]
+      mview.live().remove()
+      execContext.removeView mview
 
   view.render()

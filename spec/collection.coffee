@@ -23,6 +23,7 @@ describe "collection", ->
       @collection.add new TestModel( {attribute: num})
     
     setFixtures simple_collection_template.render({collection: @collection})
+    simple_collection_template.makeAlive()
 
   it "creates a span for the main collection and each items with the right content", ->
     compareToCollection @collection
@@ -48,6 +49,7 @@ describe "collection", ->
         @collection.add new TestModel( {attribute: num})
       #console.log t({collection: @collection})
       setFixtures template.render({collection: @collection})
+      template.makeAlive()
     
     it "uses colTag and attributes argument properly", ->
       useTemplate coltagname_change_template

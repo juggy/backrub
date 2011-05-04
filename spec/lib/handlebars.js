@@ -1,3 +1,5 @@
+// v1.0.0b2
+
 // lib/handlebars/parser.js
 /* Jison generated parser */
 var handlebars = (function(){
@@ -107,6 +109,8 @@ parse: function parse(input) {
     this.lexer.setInput(input);
     this.lexer.yy = this.yy;
     this.yy.lexer = this.lexer;
+    if (typeof this.lexer.yylloc == 'undefined')
+        this.lexer.yylloc = {};
     var yyloc = this.lexer.yylloc;
     lstack.push(yyloc);
 
@@ -191,7 +195,7 @@ parse: function parse(input) {
                 popStack(1);
                 state = stack[stack.length-1];
             }
-            
+
             preErrorSymbol = symbol; // save the lookahead token
             symbol = TERROR;         // insert generic error symbol as new lookahead
             state = stack[stack.length-1];
@@ -345,7 +349,7 @@ next:function () {
                 this.yylloc = {first_line: this.yylloc.last_line,
                                last_line: this.yylineno+1,
                                first_column: this.yylloc.last_column,
-                               last_column: lines ? lines[lines.length-1].length-1 : this.yylloc.last_column + match.length}
+                               last_column: lines ? lines[lines.length-1].length-1 : this.yylloc.last_column + match[0].length}
                 this.yytext += match[0];
                 this.match += match[0];
                 this.matches = match;
@@ -432,13 +436,34 @@ case 21: return 5;
 break;
 }
 };
-lexer.rules = [/^[^\x00]*?(?=(\{\{))/,/^[^\x00]+/,/^\{\{>/,/^\{\{#/,/^\{\{\//,/^\{\{\^/,/^\{\{\s*else\b/,/^\{\{\{/,/^\{\{&/,/^\{\{!.*?\}\}/,/^\{\{/,/^=/,/^\.(?=[} ])/,/^\.\./,/^[/.]/,/^\s+/,/^\}\}\}/,/^\}\}/,/^"(\\["]|[^"])*"/,/^[a-zA-Z0-9_]+(?=[=} /.])/,/^./,/^$/];
+lexer.rules = [/^[^\x00]*?(?=(\{\{))/,/^[^\x00]+/,/^\{\{>/,/^\{\{#/,/^\{\{\//,/^\{\{\^/,/^\{\{\s*else\b/,/^\{\{\{/,/^\{\{&/,/^\{\{![\s\S]*?\}\}/,/^\{\{/,/^=/,/^\.(?=[} ])/,/^\.\./,/^[/.]/,/^\s+/,/^\}\}\}/,/^\}\}/,/^"(\\["]|[^"])*"/,/^[a-zA-Z0-9_-]+(?=[=} /.])/,/^./,/^$/];
 lexer.conditions = {"mu":{"rules":[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21],"inclusive":false},"INITIAL":{"rules":[0,1,21],"inclusive":true}};return lexer;})()
 parser.lexer = lexer;
 return parser;
 })();
+if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
+exports.parser = handlebars;
+exports.parse = function () { return handlebars.parse.apply(handlebars, arguments); }
+exports.main = function commonjsMain(args) {
+    if (!args[1])
+        throw new Error('Usage: '+args[0]+' FILE');
+    if (typeof process !== 'undefined') {
+        var source = require('fs').readFileSync(require('path').join(process.cwd(), args[1]), "utf8");
+    } else {
+        var cwd = require("file").path(require("file").cwd());
+        var source = cwd.join(args[1]).read({charset: "utf-8"});
+    }
+    return exports.parser.parse(source);
+}
+if (typeof module !== 'undefined' && require.main === module) {
+  exports.main(typeof process !== 'undefined' ? process.argv.slice(1) : require("system").args);
+}
+};
+;
 // lib/handlebars/base.js
 var Handlebars = {};
+
+Handlebars.VERSION = "1.0.beta.1";
 
 Handlebars.Parser = handlebars;
 
@@ -449,22 +474,6 @@ Handlebars.parse = function(string) {
 
 Handlebars.print = function(ast) {
   return new Handlebars.PrintVisitor().accept(ast);
-};
-
-Handlebars.Runtime = {};
-
-Handlebars.Runtime.compile = function(string) {
-  var ast = Handlebars.parse(string);
-
-  return function(context, helpers, partials) {
-    helpers  = helpers || Handlebars.helpers;
-    partials = partials || Handlebars.partials;
-
-    var internalContext = new Handlebars.Context(context, helpers, partials);
-    var runtime = new Handlebars.Runtime(internalContext);
-    runtime.accept(ast);
-    return runtime.buffer;
-  };
 };
 
 Handlebars.helpers  = {};
@@ -673,7 +682,7 @@ Handlebars.SafeString.prototype.toString = function() {
   };
 
   var badChars = /&(?!\w+;)|[<>]/g;
-  var possible = /[&<>]/
+  var possible = /[&<>]/;
 
   var escapeChar = function(chr) {
     return escape[chr] || "&amp;"
@@ -707,7 +716,7 @@ Handlebars.SafeString.prototype.toString = function() {
     }
   };
 })();;
-// lib/handlebars/vm.js
+// lib/handlebars/compiler.js
 Handlebars.Compiler = function() {};
 Handlebars.JavaScriptCompiler = function() {};
 
@@ -995,7 +1004,7 @@ Handlebars.JavaScriptCompiler = function() {};
     // PUBLIC API: You can override these methods in a subclass to provide
     // alternative compiled forms for name lookup and buffering semantics
     nameLookup: function(parent, name, type) {
-      if(JavaScriptCompiler.RESERVED_WORDS[name]) {
+      if(JavaScriptCompiler.RESERVED_WORDS[name] || name.indexOf('-') !== -1) {
         return parent + "['" + name + "']";
       } else {
         return parent + "." + name;
@@ -1134,10 +1143,12 @@ Handlebars.JavaScriptCompiler = function() {};
 
       container.children = this.environment.children;
 
-      return function(context, helpers, partials, data, $depth) {
+      return function(context, options, $depth) {
         try {
-          var args = Array.prototype.slice.call(arguments);
-          args.unshift(Handlebars);
+          options = options || {};
+          var args = [Handlebars, context, options.helpers, options.partials, options.data];
+          var depth = Array.prototype.slice.call(arguments, 2);
+          args = args.concat(depth);
           return container.render.apply(container, args);
         } catch(e) {
           throw e;
@@ -1380,7 +1391,7 @@ Handlebars.JavaScriptCompiler = function() {};
 
     quotedString: function(str) {
       return '"' + str
-        .replace(/\\/, '\\\\')
+        .replace(/\\/g, '\\\\')
         .replace(/"/g, '\\"')
         .replace(/\n/g, '\\n')
         .replace(/\r/g, '\\r') + '"';
@@ -1400,18 +1411,30 @@ Handlebars.JavaScriptCompiler = function() {};
 })(Handlebars.Compiler, Handlebars.JavaScriptCompiler);
 
 Handlebars.VM = {
-  programWithDepth: function(fn) {
-    var args = Array.prototype.slice.call(arguments, 1);
-    return function(context, helpers, partials, data) {
-      args[0] = helpers || args[0];
-      args[1] = partials || args[1];
-      args[2] = data || args[2];
-      return fn.apply(this, [context].concat(args));
+  programWithDepth: function(fn, helpers, partials, data, $depth) {
+    var args = Array.prototype.slice.call(arguments, 4);
+
+    return function(context, options) {
+      options = options || {};
+
+      options = {
+        helpers: options.helpers || helpers,
+        partials: options.partials || partials,
+        data: options.data || data
+      };
+
+      return fn.apply(this, [context, options].concat(args));
     };
   },
   program: function(fn, helpers, partials, data) {
-    return function(context, h2, p2, d2) {
-      return fn(context, h2 || helpers, p2 || partials, d2 || data);
+    return function(context, options) {
+      options = options || {};
+
+      return fn(context, {
+        helpers: options.helpers || helpers,
+        partials: options.partials || partials,
+        data: options.data || data
+      });
     };
   },
   noop: function() { return ""; },
@@ -1424,10 +1447,10 @@ Handlebars.VM = {
     if(partial === undefined) {
       throw new Handlebars.Exception("The partial " + name + " could not be found");
     } else if(partial instanceof Function) {
-      return partial(context, helpers, partials);
+      return partial(context, {helpers: helpers, partials: partials});
     } else {
       partials[name] = Handlebars.VM.compile(partial);
-      return partials[name](context, helpers, partials);
+      return partials[name](context, {helpers: helpers, partials: partials});
     }
   }
 };
