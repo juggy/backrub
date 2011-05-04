@@ -209,6 +209,7 @@ _.extend Backbone.Template.prototype,
     _.each currentViews, (view, bvid)->
       query.push "[data-bvid='#{bvid}']"
     
+    @_alive = true
     self = @
     $(query.join( "," ), base).each ->
       el = $(@)
@@ -218,7 +219,6 @@ _.extend Backbone.Template.prototype,
       view.alive?.call(view)
     #move alive views away for other makeAlive passes
     _.extend @_aliveViews, currentViews
-    @_alive = true
   
   
   isAlive: ->
