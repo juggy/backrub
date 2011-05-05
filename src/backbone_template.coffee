@@ -135,7 +135,7 @@ Handlebars.Compiler.prototype.mustache = (mustache)->
     Template._Genuine.mustache.call(this, mustache);
   else
     id = new Handlebars.AST.IdNode(['bind']);
-    mustache.id.string = "@#{mustache.id.string}"
+    mustache.id.string = "#{mustache.id.string}"
     mustache = new Handlebars.AST.MustacheNode([id].concat([mustache.id]), mustache.hash, !mustache.escaped);
     Template._Genuine.mustache.call(this, mustache);
     
