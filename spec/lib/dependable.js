@@ -8,7 +8,7 @@
           attribute_2: 2
         },
         initialize: function() {
-          return this.dependencies(this, {
+          return this.dependencies({
             "composed change:attribute_1 change:attribute_2": "",
             "composed2 change:attribute_1 change:attribute_2": ""
           });

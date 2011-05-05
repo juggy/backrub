@@ -6,7 +6,7 @@ describe "dependable", ->
         attribute_2: 2
         
       initialize: ->
-        @dependencies @,
+        @dependencies 
           "composed change:attribute_1 change:attribute_2" : ""
           "composed2 change:attribute_1 change:attribute_2" : ""
           

@@ -156,7 +156,8 @@ Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
 # dependent on some _event_ and make sure a change:attribute_name event 
 # will be trigger on the object defined by the _path_
 #
-Backbone.dependencies = (base, onHash)->
+Backbone.dependencies = (onHash, base)->
+  base = base || this
   throw new Error "Not a Backbone.Event object" if !base.trigger and !base.bind
   setupEvent = (event, path)->
     parts = event.split(" ")
