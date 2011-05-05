@@ -10,7 +10,7 @@ Template =
     base = base || window
     prev = base
     throw new Error "Path is undefined or null" if path == null or path is undefined
-    parts = path.split(".")
+    parts = path.split(".") 
     _.each parts, (p)->
       prev = base
       base = if p is "" then base else base[p]
@@ -91,6 +91,7 @@ Template =
     
     v = new viewProto(options)
     throw new Error "Cannot instantiate view" if !v
+    v._ensureElement = Template._BindView.prototype._ensureElement
     v.span = Template._BindView.prototype.span
     v.live = Template._BindView.prototype.live
     v.textAttributes = Template._BindView.prototype.textAttributes
@@ -103,6 +104,12 @@ Template =
   #
   _BindView : Backbone.View.extend
     tagName : "span"
+    #
+    # _ensureElement is a noop to avoid creating tons of elements for nothing while
+    # building the template.
+    #
+    _ensureElement: ->
+      null
     live : -> $("[data-bvid='#{@bvid}']")
     initialize: -> 
       _.bindAll this, "render", "rerender", "span", "live", "value", "textAttributes"
@@ -176,7 +183,7 @@ Backbone.dependencies = (onHash, base)->
 for proto in [Backbone.Model.prototype, Backbone.Controller.prototype, Backbone.Collection.prototype, Backbone.View.prototype]
   _.extend proto, {dependencies: Backbone.dependencies}
 
-
+ 
 Backbone.Template = (template)->
   _.bindAll @, "addView", "render", "makeAlive", "isAlive"
   @compiled = Handlebars.compile( template, {data: true, stringParams: true} )
