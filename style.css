@@ -1,0 +1,46 @@
+body {
+  margin-top: 1.0em;
+  font-family: "Helvetica Neue", helvetica, arial, sans-serif;
+  background-color: #D2DDD1;
+  color: #222;
+}
+#container {
+  margin: 0 auto;
+  width: 700px;
+}
+h1, h2, h3 {
+  text-shadow: 0 1px 0 rgba(255,255,255, 0.75);
+  -moz-text-shadow: 0 1px 0 rgba(255,255,255, 0.75);
+  -webkit-text-shadow: 0 1px 0 rgba(255,255,255, 0.75);
+  color: #828881;
+}
+h1 { 
+  font-size: 3.8em;
+  margin-bottom: 3px;
+}
+h1 .small {
+  font-size: 0.4em;
+  color: #82AA81;
+}
+h1 a { 
+  text-decoration: none;
+  color: #82AA81;
+}
+h2 { font-size: 1.5em;}
+h3 { 
+  text-align: center;
+  font-style: italic; 
+}
+a { color: #828881; }
+.description { 
+  font-size: 1.2em;
+  margin-bottom: 30px; 
+  margin-top: 30px;
+}
+.download { float: right; }
+.license {
+  font-size: 0.5em;
+}
+pre { background: #000; color: #fff; padding: 15px;}
+hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+.footer { text-align:center; padding-top:30px; font-style: italic; }

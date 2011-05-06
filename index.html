@@ -3,31 +3,16 @@
 <head>
   <meta charset='utf-8'>
 
-  <title>juggy/backrub @ GitHub</title>
-
-  <style type="text/css">
-    body {
-      margin-top: 1.0em;
-      background-color: #1dce10;
-      font-family: Helvetica, Arial, FreeSans, san-serif;
-      color: #ffffff;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-    h1 { font-size: 3.8em; color: #e231ef; margin-bottom: 3px; }
-    h1 .small { font-size: 0.4em; }
-    h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #e231ef; }
-    h3 { text-align: center; color: #e231ef; }
-    a { color: #e231ef; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-    pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-  </style>
+  <title>backrub | Massages for your BackboneVviews</title>
+  <link href="https://github.com/juggy/backrub-todos/raw/master/stylesheets/screen.css" media="all" rel="stylesheet" type="text/css"/>
+  <link href="style.css" media="screen" rel="stylesheet" type="text/css"/>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js" type="text/javascript"></script>
+  <script src="https://github.com/DanielRapp/Noisy/raw/master/jquery/jquery.noisy.min.js" type="text/javascript"></script>
+  <script type="text/javascript" src="http://ajax.cdnjs.com/ajax/libs/underscore.js/1.1.5/underscore-min.js"></script>
+  <script type="text/javascript" src="http://ajax.cdnjs.com/ajax/libs/backbone.js/0.3.3/backbone-min.js"></script>
+  <script type="text/javascript" src="https://github.com/juggy/backrub-todos/raw/master/javascripts/backbone.localStorage.js" type="text/javascript"></script>
+  <script type="text/javascript" src="https://github.com/juggy/backrub-todos/raw/master/javascripts/handlebars.js" ></script>
+  <script type="text/javascript" src="https://github.com/juggy/backrub-todos/raw/master/javascripts/backrub.js" ></script>
 </head>
 
 <body>
@@ -42,44 +27,95 @@
         <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
     </div>
 
-    <h1><a href="http://github.com/juggy/backrub">backrub</a>
-      <span class="small">by <a href="http://github.com/juggy">juggy</a></span></h1>
+    <h1><a href="http://github.com/juggy/backrub">Backrub</a>
+      <span class="small">by <a href="http://github.com/juggy">Julien Guimont</a></span></h1>
 
     <div class="description">
-      A massage for your Backbone Views. Templating for Backbone inspired by Sproutcore use of Handlebars
-    </div>
+      <h3>A massage for your Backbone Views. Templating for Backbone inspired by Sproutcore use of Handlebars</h3>
+      <p>Backrub is Handlebars {{templates}} beautifully integrated into Backbone Views. The main inspiration for the project is the use of Handlebars to power the new TemplateView in SproutCore.</p>
 
-    <h2>License</h2>
-<p># What is backbone-template
+      <p>Define your page structure entirely in Backrub template and let the template create instance of your different Views. No more code to handle the events from the model to refresh the page, Backrub does it for you. </p>
+      <script id="app-template" type="text/handlebar-template">
+            {{#view AppView}}
+              <div class='title'>
+                <h1>Todos</h1>
+              </div>
+              <div class='content'>
+                <div id='create-todo'>
+                  <input id='new-todo' placeholder='What needs to be done?' type='text' />
+                  <span class='ui-tooltip-top'>Press Enter to create this task</span>
+                </div>
+                <div id="todos"
+                  {{#collection model colTag="ul" colId="todo-list" itemView="TodoView"}}
+                    {{#if done}}
+                      <input type='checkbox' class='todo-check' checked="checked" />
+                    {{else}}
+                      <input type='checkbox' class='todo-check'/>
+                    {{/if}}
+                    <div class='todo-content'>{{content}}</div>
+                    <span class='todo-destroy'></span>
+                    <input type='text' class='todo-input' {{bindAttr value=content}}/>
+                  {{/collection}}
+                </div>
+              </div>
+              <div id='todo-stats'>
+                {{#if items}}
+                  <span class="todo-count">
+                    <span class="number">{{bind "remainingItems"}}</span>
+                    <span class="word"> {{bind "remainingWord"}}</span> 
+                    left.
+                  </span>
+                {{/if}}
+                {{#if doneItems}}
+                  <span class="todo-clear">
+                    <a href="#">
+                      Clear 
+                      <span class="number-done">{{bind "doneItems"}} </span>
+                      completed 
+                      <span class="word-done">{{bind "doneWord"}}</span>
+                    </a>
+                  </span>
+                {{/if}}
+              </div>
+            </div>
+            <ul id='instructions'>
+              <li>Double-click to edit a todo.</li>
+            </ul>
+            <div id='credits'>
+              Created by
+              <br />
+              <a href='http://jgn.me/'>J&eacute;r&ocirc;me Gravel-Niquet</a>
+              <br />
+              Updated by
+              <br />
+              <a href='http://jguimont.com/'>Julien Guimont</a>
+            {{/view}}
+          </script>
+      <script language="javascript" src="https://github.com/juggy/backrub-todos/raw/master/javascripts/todos.js" type="text/javascript"></script>
 
-Backrub is Handlebars {{templates}} beautifully integrated into Backbone Views. The main inspiration for the project is the use of Handlebars to power the new TemplateView in SproutCore.
+    <h2>Authors</h2>
+    <p>Julien Guimont (julien.guimont@gmail.com)
+    
+  
+    <h2>License (MIT)</h2>
+<div class="license">
+<p>Copyright (c) 2010 Julien Guimont julien.guimont@gmail.com</p>
 
-The goal is to define your page structure entirely in Backrub and let the template create instance of your different Backbone Views. Pretty similar to how you would build an ERB template on Rails and other backend frameworks. You can have if statements, loops and use data from objects. The magic behind this is that the different elements of your template will update automatically upon change by listening to Backbone "change:*" events. 
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
 
-For example: your if statement depends on the "done" value of you model; when "done" changes the if will be reevaluated and if needed rerendered on the page for your. All the bindings will be done for you.</p>
-<h2>Authors</h2>
-<p>Julien Guimont (julien.guimont@gmail.com)<br/><br/>      </p>
-<h2>Contact</h2>
-<p>Julien Guimont (julien.guimont@gmail.com)<br/>      </p>
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
 
-
-    <h2>Download</h2>
-    <p>
-      You can download this project in either
-      <a href="http://github.com/juggy/backrub/zipball/master">zip</a> or
-      <a href="http://github.com/juggy/backrub/tarball/master">tar</a> formats.
-    </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
-      <pre>$ git clone git://github.com/juggy/backrub</pre>
-    </p>
-
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+</div>
     <div class="footer">
       get the source code on GitHub : <a href="http://github.com/juggy/backrub">juggy/backrub</a>
     </div>
 
   </div>
 
-  
+  <script>
+    $('body').noisy();
+  </script>
 </body>
+
 </html>
