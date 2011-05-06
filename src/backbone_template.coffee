@@ -30,16 +30,16 @@ Template =
   #
   _resolveValue : (attr, model)->
     model_info = Template._resolveIsModel attr, model
-    value = try
-      Template._getPath model_info.attr, model_info.model, true
-    catch error
-      #model_info.attr
     if model_info.is_model
       model_info.model.get(model_info.attr)
-    else if typeof( value ) is "function"
-      value()
+    else if model_info.is_model is null
+      attr
     else
-      value || ""
+      value = try
+        Template._getPath model_info.attr, model_info.model, true
+      catch error
+      
+      if typeof( value ) is "function" then value() else value
 
   #
   # Determine if the attribute is a model attribute or view attribute
@@ -51,25 +51,37 @@ Template =
       is_model = true
       model = model.model
       attr.substring(1)
-    else if attr and model.model and model.model.get(attr) isnt undefined
+    else if attr and model.model and model.model.get and model.model.get(attr) isnt undefined
       is_model = true
       model = model.model
       attr
-    else
+    else if model[attr] isnt undefined
       attr
-    {is_model: is_model, attr: attr, model: model}
+    else
+      model = null
+      is_model = null
+      attr
+    
+    #
+    # return an object with a convenient bind method that check the presence of a model
+    #
+    is_model: is_model
+    attr: attr
+    model: model
+    bind: (callback)->
+      if model and model.bind 
+        model.bind "change:#{attr}", callback
 
   #
   # Used by if and unless helpers to render the and listen changes
   #
   _bindIf : (attr, context)->
     if context 
-      view = new Template._BindView
-        attr  : attr
-        model : this
-      context.data.exec.addView view
+      view = Template._createBindView( attr, this, context)
+        
       model_info = Template._resolveIsModel attr, this
-      model_info.model.bind "change:#{model_info.attr}", ->
+      
+      model_info.bind ->
         if context.data.exec.isAlive()
           view.rerender()
           context.data.exec.makeAlive()
@@ -81,6 +93,34 @@ Template =
       view.render()
     else
       throw new Error "No block is provided!"
+
+
+  #
+  #
+  #
+  _bindAttr : (attrs, context, model)->
+    id = _.uniqueId('ba')
+    outAttrs = []
+    self = model || this
+    #go thru every attributes in the hash
+    _.each attrs, (attr, k)->
+      model_info = Template._resolveIsModel attr, self
+      value = Template._resolveValue attr, self
+      outAttrs.push "#{k}=\"#{value}\""
+
+      #handle change events
+      model_info.bind ->
+        if context.data.exec.isAlive()
+          el = $("[data-baid='#{id}']")
+          if el.length is 0
+            model_info.model.unbind "change#{model_info.attr}"
+          else
+            el.attr k, Template._resolveValue attr, self
+  
+    if outAttrs.length > 0
+      outAttrs.push "data-baid=\"#{id}\""
+     
+    new Handlebars.SafeString outAttrs.join(" ")
 
   #
   # Create a backbone view with the specified prototype.
@@ -95,8 +135,26 @@ Template =
     v.span = Template._BindView.prototype.span
     v.live = Template._BindView.prototype.live
     v.textAttributes = Template._BindView.prototype.textAttributes
-    v.bvid = "bv-#{jQuery.uuid++}"
+    v.bvid = "#{_.uniqueId('bv')}"
     return v
+
+  #
+  # Create a bind view and parse the hash properly
+  #
+  _createBindView : (attr, model, context)->
+    view = new Template._BindView
+      attr  : attr
+      model : model
+      context: context
+      prevThis: model
+    context.data.exec.addView view
+    
+    if context.hash
+      view.tagName = context.hash.tag || view.tagName
+      delete context.hash.tag
+      view.attributes = context.hash
+      
+    view
 
   #
   # Lightweight span based view to encapsulate the different helpers
@@ -113,18 +171,17 @@ Template =
     live : -> $("[data-bvid='#{@bvid}']")
     initialize: -> 
       _.bindAll this, "render", "rerender", "span", "live", "value", "textAttributes"
-      @bvid = "bv-#{jQuery.uuid++}"
+      @bvid = "#{_.uniqueId('bv')}"
       @attr = @options.attr
+      @prevThis = @options.prevThis
+      @hbContext = @options.context
     value: ->
       Template._resolveValue @attr, @model
     textAttributes: ->
-      #return @renderedAttributes if @renderedAttributes
       @attributes = @attributes || @options.attributes || {}
       @attributes.id = @id if !(@attributes.id) && @id
       @attributes.class = @className if !@attributes.class && @className
-      attr = _.map @attributes, (v, k)->
-        "#{k}=\"#{v}\""
-      attr.join(" ")
+      Template._bindAttr(@attributes, @hbContext, @prevThis || this).string
     span: (inner)->
       "<#{@tagName} #{@textAttributes()} data-bvid=\"#{@bvid}\">#{inner}</#{@tagName}>"
     rerender : ->
@@ -142,7 +199,6 @@ Handlebars.Compiler.prototype.mustache = (mustache)->
     Template._Genuine.mustache.call(this, mustache);
   else
     id = new Handlebars.AST.IdNode(['bind']);
-    mustache.id.string = "#{mustache.id.string}"
     mustache = new Handlebars.AST.MustacheNode([id].concat([mustache.id]), mustache.hash, !mustache.escaped);
     Template._Genuine.mustache.call(this, mustache);
     
@@ -151,11 +207,9 @@ Handlebars.Compiler.prototype.mustache = (mustache)->
 #
 Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
   if type is 'context' 
-    "(context.model && context.model.get(\"#{name}\") != null ? \"@#{name}\" : \"#{name}\");"
+    "\"#{name}\""
   else
     Template._Genuine.nameLookup.call(this, parent, name, type)
-
-
 
 #
 # Call this within the initialize function of your View, Controller, Model.
@@ -297,16 +351,10 @@ Handlebars.registerHelper "view", (viewName, context)->
 #
 Handlebars.registerHelper "bind", (attrName, context)->
   execContext = context.data.exec
-  view = new Template._BindView
-    attr  : attrName
-    model : this
-  if context.hash
-    view.tagName = context.hash.tag || view.tagName
-    delete context.hash.tag
-    view.attributes = context.hash
-  execContext.addView view
+  view = Template._createBindView( attrName, this, context )
+    
   model_info = Template._resolveIsModel attrName, this
-  model_info.model.bind "change:#{model_info.attr}", ->
+  model_info.bind ->
     if execContext.isAlive()
       view.rerender()
       execContext.makeAlive()
@@ -319,30 +367,7 @@ Handlebars.registerHelper "bind", (attrName, context)->
 # track of the element for further updates.
 #
 Handlebars.registerHelper "bindAttr", (context)->
-  attrs = context.hash
-  id = jQuery.uuid++
-  outAttrs = []
-  self = this
-  #go thru every attributes in the hash
-  _.each attrs, (v, k)->
-    attr = v
-    
-    model_info = Template._resolveIsModel attr, self
-    value = Template._resolveValue attr, self
-    outAttrs.push "#{k}=\"#{value}\""
-    
-    #handle change events
-    model_info.model.bind "change:#{model_info.attr}", ->
-      if context.data.exec.isAlive()
-        el = $("[data-baid='ba-#{id}']")
-      
-        if el.length is 0
-          model_info.model.unbind "change#{model_info.attr}"
-        else
-          el.attr k, Template._resolveValue( attr, self)
-  
-  outAttrs.push "data-baid=\"ba-#{id}\""
-  new Handlebars.SafeString outAttrs.join(" ")
+  _.bind(Template._bindAttr, this)(context.hash, context)
 
 #
 # Bounded if
@@ -403,6 +428,7 @@ Handlebars.registerHelper "collection", (attr, context)->
     Template._createView colView, 
       model: collection
       attributes: colAtts
+      context: context
       tagName : if options?.colTag then colTagName else colView.prototype.tagName
   else
     new Template._BindView
@@ -410,6 +436,7 @@ Handlebars.registerHelper "collection", (attr, context)->
       attributes: colAtts
       attr  : attr
       model : this
+      context: context
   execContext.addView view
   
   views = {}
@@ -422,12 +449,14 @@ Handlebars.registerHelper "collection", (attr, context)->
       Template._createView itemView, 
         model: m
         attributes: itemAtts
+        context: context
         tagName : if options?.itemTag then itemTagName else itemView.prototype.tagName
     else
       new Template._BindView
         tagName: itemTagName
         attributes: itemAtts
         model: m
+        context: context
     execContext.addView mview
     
     #

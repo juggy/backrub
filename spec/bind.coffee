@@ -1,8 +1,6 @@
-simple_bind_template = new Backbone.Template '{{attribute_1}}'
+simple_bind_template = new Backbone.Template '{{bind attribute_1 class=attribute_2 id=tata}}'
 simple_bindattr_template = new Backbone.Template '<span {{bindAttr class=attribute_6}}></span>'
 view_bindattr_template = new Backbone.Template '<span {{bindAttr class=fn}}></span>'
-
-
 
 describe "bind", ->
 
@@ -19,6 +17,13 @@ describe "bind", ->
     @model.set {attribute_1 : 10}
     expect($("span[data-bvid]")).toHaveText @model.get("attribute_1")
     
+  it "class is loaded from the context", ->
+    expect($("span.#{@model.get("attribute_2")}").length).toEqual 1
+    @model.set {attribute_1 : 10, attribute_2 : 10}
+    expect($("span.#{@model.get("attribute_2")}").length).toEqual 1
+  
+  it "id is static", ->
+    expect($("span#tata").length).toEqual 1
 
 describe "bindAttr", ->
 
