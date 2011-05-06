@@ -1,4 +1,4 @@
-# What is backbone-template
+# What is Backrub
 
 Backrub is Handlebars {{templates}} beautifully integrated into Backbone Views. The main inspiration for the project is the use of Handlebars to power the new TemplateView in SproutCore.
 
