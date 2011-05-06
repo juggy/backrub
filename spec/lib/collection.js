@@ -1,11 +1,11 @@
 (function() {
   var colitemview_change_template, coltagname_change_template, colview_change_template, itemtagname_change_template, itemview_change_template, simple_collection_template;
-  simple_collection_template = new Backbone.Template('{{#collection "collection"}}{{attribute}}{{/collection}}');
-  coltagname_change_template = new Backbone.Template('{{#collection "collection" colTag="ol" colId="col" }}{{attribute}}{{/collection}}');
-  itemtagname_change_template = new Backbone.Template('{{#collection "collection" colTag="div" itemTag="span" itemClass="item" }}{{attribute}}{{/collection}}');
-  colview_change_template = new Backbone.Template('{{#collection "collection" colView="SimpleView" itemTag="span"}}{{attribute}}{{/collection}}');
-  itemview_change_template = new Backbone.Template('{{#collection "collection" colTag="div" colClass="col" itemView="SimpleView"}}{{attribute}}{{/collection}}');
-  colitemview_change_template = new Backbone.Template('{{#collection "collection" colView="SimpleView" colTag="span" itemView="SimpleView"}}{{attribute}}{{/collection}}');
+  simple_collection_template = new Backbone.Backrub('{{#collection "collection"}}{{attribute}}{{/collection}}');
+  coltagname_change_template = new Backbone.Backrub('{{#collection "collection" colTag="ol" colId="collection" }}{{attribute}}{{/collection}}');
+  itemtagname_change_template = new Backbone.Backrub('{{#collection "collection" colTag="div" itemTag="span" itemClass="item" }}{{attribute}}{{/collection}}');
+  colview_change_template = new Backbone.Backrub('{{#collection "collection" colView="SimpleView" itemTag="span"}}{{attribute}}{{/collection}}');
+  itemview_change_template = new Backbone.Backrub('{{#collection "collection" colTag="div" colClass="col" itemView="SimpleView"}}{{attribute}}{{/collection}}');
+  colitemview_change_template = new Backbone.Backrub('{{#collection "collection" colView="SimpleView" colTag="span" itemView="SimpleView"}}{{attribute}}{{/collection}}');
   describe("collection", function() {
     var compareToCollection;
     compareToCollection = function(collection, colTag, itemTag) {
@@ -70,7 +70,7 @@
       };
       it("uses colTag and attributes argument properly", function() {
         useTemplate(coltagname_change_template);
-        return compareToCollection(this.collection, "ol#col", "");
+        return compareToCollection(this.collection, "ol#collection");
       });
       it("uses itemTag and attributes argument properly", function() {
         useTemplate(itemtagname_change_template);

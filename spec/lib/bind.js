@@ -1,8 +1,8 @@
 (function() {
   var simple_bind_template, simple_bindattr_template, view_bindattr_template;
-  simple_bind_template = new Backbone.Template('{{bind attribute_1 class=attribute_2 id=tata}}');
-  simple_bindattr_template = new Backbone.Template('<span {{bindAttr class=attribute_6}}></span>');
-  view_bindattr_template = new Backbone.Template('<span {{bindAttr class=fn}}></span>');
+  simple_bind_template = new Backbone.Backrub('{{bind attribute_1 class=attribute_2 id=tata}}');
+  simple_bindattr_template = new Backbone.Backrub('<span {{bindAttr class=attribute_6}}></span>');
+  view_bindattr_template = new Backbone.Backrub('<span {{bindAttr class=fn}}></span>');
   describe("bind", function() {
     beforeEach(function() {
       this.model = new TestModel;

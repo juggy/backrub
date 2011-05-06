@@ -1,8 +1,8 @@
 # What is backbone-template
 
-Backbone Template is Handlebars {templates} beautifully integrated into Backbone Views. The main inspiration for the project is the use of Handlebars to power the new TemplateView in SproutCore.
+Backrub is Handlebars {{templates}} beautifully integrated into Backbone Views. The main inspiration for the project is the use of Handlebars to power the new TemplateView in SproutCore.
 
-The goal is to define your page structure entirely in Backbone Template and let the template create instance of your different Backbone Views. Pretty similar to how you would build an ERB template on Rails and other backend frameworks. You can have if statements, loops and use data from objects. The magic behind this is that the different elements of your template will update automatically upon change by listening to Backbone "change:*" events. 
+The goal is to define your page structure entirely in Backrub and let the template create instance of your different Backbone Views. Pretty similar to how you would build an ERB template on Rails and other backend frameworks. You can have if statements, loops and use data from objects. The magic behind this is that the different elements of your template will update automatically upon change by listening to Backbone "change:*" events. 
 
 For example: your if statement depends on the "done" value of you model; when "done" changes the if will be reevaluated and if needed rerendered on the page for your. All the bindings will be done for you.
 
@@ -34,7 +34,7 @@ If you extend the TemplateView, you can specify the _template_ attribute. You mi
 
 Otherwise you can load the template directly within your existing views, render it and make it alive (more on that later):
 
-    var template = new Backbone.Template( '{{#view "SimpleView" model=model}}{{attribute_1}}{{/view}}' );
+    var template = new Backbone.Backrub( '{{#view "SimpleView" model=model}}{{attribute_1}}{{/view}}' );
     $("body").append( template.render({model: new Backbone.Model}) );
     template.makeAlive();
     
@@ -61,10 +61,10 @@ To somewhat help with the eventing problem, I created a dependency definition:
 You define the dependencies using an object of {"attribute event" : base_object}. If the base is the current object use an empty string. 
 
 **Context**
-Handlebars has a concept of context. Each element lives within one. In the case of Backbone Templates this context is always a Backbone View. You access data in this context. 
+Handlebars has a concept of context. Each element lives within one. In the case of Backrub this context is always a Backbone View. You access data in this context. 
 
 **Data resolution**
-Backbone Template will always set the model attribute on your View when. To access the model attributes you can either use the attribute name directly and the template will determine if it is a model attribute first and if not it will fallback on the context attribute. If you want to force the template to look into the model give it a string starting with @ like "@content". This will mark that attribute as a model attribute and nothing more.
+Backrub will always set the model attribute on your View when. To access the model attributes you can either use the attribute name directly and the template will determine if it is a model attribute first and if not it will fallback on the context attribute. If you want to force the template to look into the model give it a string starting with @ like "@content". This will mark that attribute as a model attribute and nothing more.
 
 Example:
 
@@ -80,7 +80,7 @@ If you use a template like this:
 
     <div>{{todoClass}}</div>
     
-Backbone Template will first look at the model attributes, then the view attributes. It will find todoClass and will check if it is a function and will execute it if needed.
+Backrub will first look at the model attributes, then the view attributes. It will find todoClass and will check if it is a function and will execute it if needed.
 
 **Element and attributes created**
 Bind and if/unless helpers will create a new _span_ element to be able to refresh that particular document section. 
@@ -125,9 +125,9 @@ You can use if/unless/else on any single data-binding. You cannot do a check wit
 
 ## view
 
-Creating a template is nice, but you need to react to events on it and add logic. This is where the _view_ helper comes in handy. You specify a Backbone.View for a part of your template and Backbone Template will instantiate it as needed. 
+Creating a template is nice, but you need to react to events on it and add logic. This is where the _view_ helper comes in handy. You specify a Backbone.View for a part of your template and Backrub will instantiate it as needed. 
 
-Some function will be added to the view (mainly: span, rerender and live). Render will be completely changed to handle the template. Backbone Template will use the id, className, tagName and attributes you have specified on your view to create it in the DOM.
+Some function will be added to the view (mainly: span, rerender and live). Render will be completely changed to handle the template. Backrub will use the id, className, tagName and attributes you have specified on your view to create it in the DOM.
 
 When you use _view_ make sure that when you actually append your template result (a string really) to your DOM, to call makeAlive to make sure all events are delegated properly by Backbone.
 

@@ -1,7 +1,7 @@
 (function() {
   var simple_ifcondition_template, simple_unlesscondition_template;
-  simple_ifcondition_template = new Backbone.Template('{{#if "@check"}}{{attribute_1}}{{else}}{{attribute_2}}{{/if}}');
-  simple_unlesscondition_template = new Backbone.Template('{{#unless "@check"}}{{attribute_1}}{{else}}{{attribute_2}}{{/unless}}');
+  simple_ifcondition_template = new Backbone.Backrub('{{#if "@check"}}{{attribute_1}}{{else}}{{attribute_2}}{{/if}}');
+  simple_unlesscondition_template = new Backbone.Backrub('{{#unless "@check"}}{{attribute_1}}{{else}}{{attribute_2}}{{/unless}}');
   describe("if", function() {
     beforeEach(function() {
       this.model = new TestModel({

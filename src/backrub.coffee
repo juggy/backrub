@@ -1,4 +1,4 @@
-Template =
+Backrub =
   _Genuine : 
     nameLookup : Handlebars.JavaScriptCompiler.prototype.nameLookup
     mustache : Handlebars.Compiler.prototype.mustache
@@ -29,14 +29,14 @@ Template =
   # simply follow the path, you need to call get on the model.
   #
   _resolveValue : (attr, model)->
-    model_info = Template._resolveIsModel attr, model
+    model_info = Backrub._resolveIsModel attr, model
     if model_info.is_model
       model_info.model.get(model_info.attr)
     else if model_info.is_model is null
       attr
     else
       value = try
-        Template._getPath model_info.attr, model_info.model, true
+        Backrub._getPath model_info.attr, model_info.model, true
       catch error
       
       if typeof( value ) is "function" then value() else value
@@ -77,9 +77,9 @@ Template =
   #
   _bindIf : (attr, context)->
     if context 
-      view = Template._createBindView( attr, this, context)
+      view = Backrub._createBindView( attr, this, context)
         
-      model_info = Template._resolveIsModel attr, this
+      model_info = Backrub._resolveIsModel attr, this
       
       model_info.bind ->
         if context.data.exec.isAlive()
@@ -87,7 +87,7 @@ Template =
           context.data.exec.makeAlive()
       #setup the render to check for truth of the value
       view.render = ->
-        fn = if Template._resolveValue( @attr, @model ) then context.fn else context.inverse
+        fn = if Backrub._resolveValue( @attr, @model ) then context.fn else context.inverse
         new Handlebars.SafeString @span( fn(@model, {data:context.data}) )
     
       view.render()
@@ -104,8 +104,8 @@ Template =
     self = model || this
     #go thru every attributes in the hash
     _.each attrs, (attr, k)->
-      model_info = Template._resolveIsModel attr, self
-      value = Template._resolveValue attr, self
+      model_info = Backrub._resolveIsModel attr, self
+      value = Backrub._resolveValue attr, self
       outAttrs.push "#{k}=\"#{value}\""
 
       #handle change events
@@ -115,7 +115,7 @@ Template =
           if el.length is 0
             model_info.model.unbind "change#{model_info.attr}"
           else
-            el.attr k, Template._resolveValue attr, self
+            el.attr k, Backrub._resolveValue attr, self
   
     if outAttrs.length > 0
       outAttrs.push "data-baid=\"#{id}\""
@@ -131,10 +131,10 @@ Template =
     
     v = new viewProto(options)
     throw new Error "Cannot instantiate view" if !v
-    v._ensureElement = Template._BindView.prototype._ensureElement
-    v.span = Template._BindView.prototype.span
-    v.live = Template._BindView.prototype.live
-    v.textAttributes = Template._BindView.prototype.textAttributes
+    v._ensureElement = Backrub._BindView.prototype._ensureElement
+    v.span = Backrub._BindView.prototype.span
+    v.live = Backrub._BindView.prototype.live
+    v.textAttributes = Backrub._BindView.prototype.textAttributes
     v.bvid = "#{_.uniqueId('bv')}"
     return v
 
@@ -142,7 +142,7 @@ Template =
   # Create a bind view and parse the hash properly
   #
   _createBindView : (attr, model, context)->
-    view = new Template._BindView
+    view = new Backrub._BindView
       attr  : attr
       model : model
       context: context
@@ -176,12 +176,12 @@ Template =
       @prevThis = @options.prevThis
       @hbContext = @options.context
     value: ->
-      Template._resolveValue @attr, @model
+      Backrub._resolveValue @attr, @model
     textAttributes: ->
       @attributes = @attributes || @options.attributes || {}
       @attributes.id = @id if !(@attributes.id) && @id
       @attributes.class = @className if !@attributes.class && @className
-      Template._bindAttr(@attributes, @hbContext, @prevThis || this).string
+      Backrub._bindAttr(@attributes, @hbContext, @prevThis || this).string
     span: (inner)->
       "<#{@tagName} #{@textAttributes()} data-bvid=\"#{@bvid}\">#{inner}</#{@tagName}>"
     rerender : ->
@@ -196,11 +196,11 @@ Template =
 #
 Handlebars.Compiler.prototype.mustache = (mustache)->
   if mustache.params.length || mustache.hash
-    Template._Genuine.mustache.call(this, mustache);
+    Backrub._Genuine.mustache.call(this, mustache);
   else
     id = new Handlebars.AST.IdNode(['bind']);
     mustache = new Handlebars.AST.MustacheNode([id].concat([mustache.id]), mustache.hash, !mustache.escaped);
-    Template._Genuine.mustache.call(this, mustache);
+    Backrub._Genuine.mustache.call(this, mustache);
     
 #
 # See handlebars code.
@@ -209,7 +209,7 @@ Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
   if type is 'context' 
     "\"#{name}\""
   else
-    Template._Genuine.nameLookup.call(this, parent, name, type)
+    Backrub._Genuine.nameLookup.call(this, parent, name, type)
 
 #
 # Call this within the initialize function of your View, Controller, Model.
@@ -223,7 +223,7 @@ Backbone.dependencies = (onHash, base)->
   setupEvent = (event, path)->
     parts = event.split(" ")
     attr = parts[0]
-    object = Template._getPath(path, base)
+    object = Backrub._getPath(path, base)
     for e in parts[1..]
       object?.bind e, ->
         base.trigger "change:#{attr}"
@@ -238,7 +238,7 @@ for proto in [Backbone.Model.prototype, Backbone.Controller.prototype, Backbone.
   _.extend proto, {dependencies: Backbone.dependencies}
 
  
-Backbone.Template = (template)->
+Backbone.Backrub = (template)->
   _.bindAll @, "addView", "render", "makeAlive", "isAlive"
   @compiled = Handlebars.compile( template, {data: true, stringParams: true} )
   @_createdViews = {}
@@ -246,7 +246,7 @@ Backbone.Template = (template)->
   @_alive = false
   return @
   
-_.extend Backbone.Template.prototype, 
+_.extend Backbone.Backrub.prototype, 
   #
   # Execute a templae given some options
   #
@@ -301,7 +301,7 @@ _.extend Backbone.Template.prototype,
     delete view
 
 #
-# A simple Backbone.View to wrap around the Backbone.Template API
+# A simple Backbone.View to wrap around the Backbone.Backrub API
 # You can use this view as any other view within backbone. Call
 # render as you would normally
 # 
@@ -309,7 +309,7 @@ Backbone.TemplateView = Backbone.View.extend
   initialize: (options)->
     @template = @template || options.template
     throw new Error "Template is missing" if !@template
-    @compile = new Backbone.Template(@template)
+    @compile = new Backbone.Backrub(@template)
   
   render : ->
     try
@@ -330,12 +330,12 @@ Backbone.TemplateView = Backbone.View.extend
 #
 Handlebars.registerHelper "view", (viewName, context)->
   execContext = context.data.exec
-  view = Template._getPath(viewName)
+  view = Backrub._getPath(viewName)
   resolvedOptions = {}
   for key, val of context.hash
-    resolvedOptions[key] = Template._resolveValue(val, this) || val
+    resolvedOptions[key] = Backrub._resolveValue(val, this) || val
 
-  v = Template._createView view, resolvedOptions
+  v = Backrub._createView view, resolvedOptions
   execContext.addView v
   v.render = ()-> 
     new Handlebars.SafeString @span( context(@, {data:context.data}) )
@@ -351,9 +351,9 @@ Handlebars.registerHelper "view", (viewName, context)->
 #
 Handlebars.registerHelper "bind", (attrName, context)->
   execContext = context.data.exec
-  view = Template._createBindView( attrName, this, context )
+  view = Backrub._createBindView( attrName, this, context )
     
-  model_info = Template._resolveIsModel attrName, this
+  model_info = Backrub._resolveIsModel attrName, this
   model_info.bind ->
     if execContext.isAlive()
       view.rerender()
@@ -367,7 +367,7 @@ Handlebars.registerHelper "bind", (attrName, context)->
 # track of the element for further updates.
 #
 Handlebars.registerHelper "bindAttr", (context)->
-  _.bind(Template._bindAttr, this)(context.hash, context)
+  _.bind(Backrub._bindAttr, this)(context.hash, context)
 
 #
 # Bounded if
@@ -375,7 +375,7 @@ Handlebars.registerHelper "bindAttr", (context)->
 # accordingly. Uses bind so a <span> will be created
 #
 Handlebars.registerHelper "if", (attr, context )->
-  _.bind(Template._bindIf, this)( attr, context)
+  _.bind(Backrub._bindIf, this)( attr, context)
 
 #
 # Bounded unless
@@ -388,7 +388,7 @@ Handlebars.registerHelper "unless", (attr, context)->
   context.fn = inverse
   context.inverse = fn
   
-  _.bind(Template._bindIf, this)( attr, context )
+  _.bind(Backrub._bindIf, this)( attr, context )
 
 #
 # Bounded each
@@ -400,17 +400,17 @@ Handlebars.registerHelper "unless", (attr, context)->
 #
 Handlebars.registerHelper "collection", (attr, context)->
   execContext = context.data.exec
-  collection = Template._resolveValue attr, this
+  collection = Backrub._resolveValue attr, this
   if not collection.each?
     throw new Error "not a backbone collection!"
   
   options = context.hash
   colViewPath = options?.colView
-  colView = Template._getPath(colViewPath) if colViewPath
+  colView = Backrub._getPath(colViewPath) if colViewPath
   colTagName = options?.colTag || "ul"
   
   itemViewPath = options?.itemView
-  itemView = Template._getPath(itemViewPath) if itemViewPath
+  itemView = Backrub._getPath(itemViewPath) if itemViewPath
   itemTagName = options?.itemTag || "li"
   
   # filter col/items arguments
@@ -425,13 +425,13 @@ Handlebars.registerHelper "collection", (attr, context)->
       itemAtts[k.substring(4).toLowerCase()] = v
   
   view = if colView 
-    Template._createView colView, 
+    Backrub._createView colView, 
       model: collection
       attributes: colAtts
       context: context
       tagName : if options?.colTag then colTagName else colView.prototype.tagName
   else
-    new Template._BindView
+    new Backrub._BindView
       tagName: colTagName
       attributes: colAtts
       attr  : attr
@@ -446,13 +446,13 @@ Handlebars.registerHelper "collection", (attr, context)->
   #
   item_view = (m)->
     mview = if itemView
-      Template._createView itemView, 
+      Backrub._createView itemView, 
         model: m
         attributes: itemAtts
         context: context
         tagName : if options?.itemTag then itemTagName else itemView.prototype.tagName
     else
-      new Template._BindView
+      new Backrub._BindView
         tagName: itemTagName
         attributes: itemAtts
         model: m

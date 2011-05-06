@@ -47,7 +47,7 @@ task "watch", "Continously compile CoffeeScript to JavaScript", ->
 
 generateDocs = (callback)->
   log "Generating documentation ...", green
-  exec "rm -rf docs && docco src/*.coffee  && mv docs/backbone_template.html docs/index.html", (err, stdout)->
+  exec "rm -rf docs && docco src/*.coffee  && mv docs/backrub.html docs/index.html", (err, stdout)->
     onerror err
 
 task "doc",        "Generate all documentation",               -> generateDocs onerror
