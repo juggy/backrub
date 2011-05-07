@@ -38,7 +38,7 @@ Otherwise you can load the template directly within your existing views, render 
     $("body").append( template.render({model: new Backbone.Model}) );
     template.makeAlive();
     
-And check out the complete todo example: https://github.com/juggy/backbone-template-todos
+And check out the complete todo example: https://github.com/juggy/backrub-todos
 It is the same as the classic Backbone example.
 
 ## Things to know
