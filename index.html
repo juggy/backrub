@@ -31,10 +31,11 @@
       <span class="small">by <a href="http://github.com/juggy">Julien Guimont</a></span></h1>
 
     <div class="description">
-      <h3>Massage your Backbone Views. Templating for Backbone inspired by Sproutcore use of Handlebars</h3>
+      <h3>Massage your Backbone Views.</h3>
       <p>Backrub is Handlebars {{templates}} beautifully integrated into Backbone Views. The main inspiration for the project is the use of Handlebars to power the new TemplateView in SproutCore.</p>
 
       <p>Define your page structure entirely in Backrub template and let the template create instance of your different Views. No more code to handle the events from the model to refresh the page, Backrub does it for you. </p>
+      <p>Here is the classic Todo example, you can find the code here: <a href="https://github.com/juggy/backrub-todos">https://github.com/juggy/backrub-todos</a>
       <script id="app-template" type="text/handlebar-template">
             {{#view AppView}}
               <div class='title'>
@@ -78,17 +79,6 @@
                 {{/if}}
               </div>
             </div>
-            <ul id='instructions'>
-              <li>Double-click to edit a todo.</li>
-            </ul>
-            <div id='credits'>
-              Created by
-              <br />
-              <a href='http://jgn.me/'>J&eacute;r&ocirc;me Gravel-Niquet</a>
-              <br />
-              Updated by
-              <br />
-              <a href='http://jguimont.com/'>Julien Guimont</a>
             {{/view}}
           </script>
       <script language="javascript" src="https://github.com/juggy/backrub-todos/raw/master/javascripts/todos.js" type="text/javascript"></script>
