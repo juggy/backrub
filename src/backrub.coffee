@@ -1,5 +1,5 @@
 Backrub =
-  _Genuine : 
+  _Genuine :
     nameLookup : Handlebars.JavaScriptCompiler.prototype.nameLookup
     mustache : Handlebars.Compiler.prototype.mustache
   #
@@ -10,7 +10,7 @@ Backrub =
     base = base || window
     prev = base
     throw new Error "Path is undefined or null" if path == null or path is undefined
-    parts = path.split(".") 
+    parts = path.split(".")
     _.each parts, (p)->
       prev = base
       base = if p is "" then base else base[p]
@@ -38,13 +38,13 @@ Backrub =
       value = try
         Backrub._getPath model_info.attr, model_info.model, true
       catch error
-      
+
       if typeof( value ) is "function" then value() else value
 
   #
   # Determine if the attribute is a model attribute or view attribute
   # If the attribute is preceded by @ it is considered a model attr.
-  #   
+  #
   _resolveIsModel : (attr, model)->
     is_model = false
     attr = if attr and (attr.charAt?(0) is "@")
@@ -61,7 +61,7 @@ Backrub =
       model = null
       is_model = null
       attr
-    
+
     #
     # return an object with a convenient bind method that check the presence of a model
     #
@@ -69,18 +69,18 @@ Backrub =
     attr: attr
     model: model
     bind: (callback)->
-      if model and model.bind 
+      if model and model.bind
         model.bind "change:#{attr}", callback
 
   #
   # Used by if and unless helpers to render the and listen changes
   #
   _bindIf : (attr, context)->
-    if context 
+    if context
       view = Backrub._createBindView( attr, this, context)
-        
+
       model_info = Backrub._resolveIsModel attr, this
-      
+
       model_info.bind ->
         if context.data.exec.isAlive()
           view.rerender()
@@ -89,7 +89,7 @@ Backrub =
       view.render = ->
         fn = if Backrub._resolveValue( @attr, @model ) then context.fn else context.inverse
         new Handlebars.SafeString @span( fn(@model, {data:context.data}) )
-    
+
       view.render()
     else
       throw new Error "No block is provided!"
@@ -116,10 +116,10 @@ Backrub =
             model_info.model.unbind "change#{model_info.attr}"
           else
             el.attr k, Backrub._resolveValue attr, self
-  
+
     if outAttrs.length > 0
       outAttrs.push "data-baid=\"#{id}\""
-     
+
     new Handlebars.SafeString outAttrs.join(" ")
 
   #
@@ -128,7 +128,7 @@ Backrub =
   # to the view.
   #
   _createView : (viewProto, options)->
-    
+
     v = new viewProto(options)
     throw new Error "Cannot instantiate view" if !v
     v._ensureElement = Backrub._BindView.prototype._ensureElement
@@ -148,12 +148,12 @@ Backrub =
       context: context
       prevThis: model
     context.data.exec.addView view
-    
+
     if context.hash
       view.tagName = context.hash.tag || view.tagName
       delete context.hash.tag
       view.attributes = context.hash
-      
+
     view
 
   #
@@ -169,7 +169,7 @@ Backrub =
     _ensureElement: ->
       null
     live : -> $("[data-bvid='#{@bvid}']")
-    initialize: -> 
+    initialize: ->
       _.bindAll this, "render", "rerender", "span", "live", "value", "textAttributes"
       @bvid = "#{_.uniqueId('bv')}"
       @attr = @options.attr
@@ -186,7 +186,7 @@ Backrub =
       "<#{@tagName} #{@textAttributes()} data-bvid=\"#{@bvid}\">#{inner}</#{@tagName}>"
     rerender : ->
       @live().replaceWith @render().string
-    render  : -> 
+    render  : ->
       new Handlebars.SafeString @span( @value() )
 
 #
@@ -201,20 +201,20 @@ Handlebars.Compiler.prototype.mustache = (mustache)->
     id = new Handlebars.AST.IdNode(['bind']);
     mustache = new Handlebars.AST.MustacheNode([id].concat([mustache.id]), mustache.hash, !mustache.escaped);
     Backrub._Genuine.mustache.call(this, mustache);
-    
+
 #
 # See handlebars code.
 #
 Handlebars.JavaScriptCompiler.prototype.nameLookup =  (parent, name, type)->
-  if type is 'context' 
+  if type is 'context'
     "\"#{name}\""
   else
     Backrub._Genuine.nameLookup.call(this, parent, name, type)
 
 #
 # Call this within the initialize function of your View, Controller, Model.
-# It will look at all the attributes for _base_ that have been marked as 
-# dependent on some _event_ and make sure a change:attribute_name event 
+# It will look at all the attributes for _base_ that have been marked as
+# dependent on some _event_ and make sure a change:attribute_name event
 # will be trigger on the object defined by the _path_
 #
 Backbone.dependencies = (onHash, base)->
@@ -227,17 +227,17 @@ Backbone.dependencies = (onHash, base)->
     for e in parts[1..]
       object?.bind e, ->
         base.trigger "change:#{attr}"
-    
+
   for event, path of onHash
     setupEvent(event, path)
-    
+
 #
 # Setup dependencies in the backbone prototype for nice syntax
 #
 for proto in [Backbone.Model.prototype, Backbone.Controller.prototype, Backbone.Collection.prototype, Backbone.View.prototype]
   _.extend proto, {dependencies: Backbone.dependencies}
 
- 
+
 Backbone.Backrub = (template)->
   _.bindAll @, "addView", "render", "makeAlive", "isAlive"
   @compiled = Handlebars.compile( template, {data: true, stringParams: true} )
@@ -245,21 +245,21 @@ Backbone.Backrub = (template)->
   @_aliveViews = {}
   @_alive = false
   return @
-  
-_.extend Backbone.Backrub.prototype, 
+
+_.extend Backbone.Backrub.prototype,
   #
   # Execute a templae given some options
   #
   render: (options)->
     self = this
     @compiled(options, {data:{exec : @}})
-  
+
   #
-  # Make Alive will properly handle the delgation of 
+  # Make Alive will properly handle the delgation of
   # events based on Backbone conventions. By default,
   # it will use the body element to find created elements
   # but you can also give a base element to query from.
-  # This is useful when your template is appended to a 
+  # This is useful when your template is appended to a
   # DOM element that wasn't inserted into the page yet.
   #
   makeAlive: (base)->
@@ -267,10 +267,10 @@ _.extend Backbone.Backrub.prototype,
     query = []
     currentViews = @_createdViews
     @_createdViews = {}
-    
+
     _.each currentViews, (view, bvid)->
       query.push "[data-bvid='#{bvid}']"
-    
+
     @_alive = true
     self = @
     $(query.join( "," ), base).each ->
@@ -281,17 +281,17 @@ _.extend Backbone.Backrub.prototype,
       view.alive?.call(view)
     #move alive views away for other makeAlive passes
     _.extend @_aliveViews, currentViews
-  
-  
+
+
   isAlive: ->
     @_alive
-  
+
   #
   # Internal API to add view to the context
   #
   addView : (view)->
     @_createdViews[view.bvid] = view
-  
+
   #
   # Internal API to remove view formt he tracking list
   #
@@ -304,13 +304,13 @@ _.extend Backbone.Backrub.prototype,
 # A simple Backbone.View to wrap around the Backbone.Backrub API
 # You can use this view as any other view within backbone. Call
 # render as you would normally
-# 
+#
 Backbone.TemplateView = Backbone.View.extend
   initialize: (options)->
     @template = @template || options.template
     throw new Error "Template is missing" if !@template
     @compile = new Backbone.Backrub(@template)
-  
+
   render : ->
     try
       $(@el).html @compile.render @
@@ -321,11 +321,11 @@ Backbone.TemplateView = Backbone.View.extend
 
 #
 # View helper
-# You can reference your backbone views in the template to 
+# You can reference your backbone views in the template to
 # add extra logic and events. Use this helper with the view
 # name (as accessible within the window object). You can give it
 # a hash with the usual backbone options (model, id, etc.)
-# The render method is redefined. A rendered event is sent but 
+# The render method is redefined. A rendered event is sent but
 # within the templating loop (elements are not on the document yet)
 #
 Handlebars.registerHelper "view", (viewName, context)->
@@ -337,10 +337,10 @@ Handlebars.registerHelper "view", (viewName, context)->
 
   v = Backrub._createView view, resolvedOptions
   execContext.addView v
-  v.render = ()-> 
+  v.render = ()->
     new Handlebars.SafeString @span( context(@, {data:context.data}) )
   v.render(v)
-  
+
 
 #
 # Bind helper
@@ -352,7 +352,7 @@ Handlebars.registerHelper "view", (viewName, context)->
 Handlebars.registerHelper "bind", (attrName, context)->
   execContext = context.data.exec
   view = Backrub._createBindView( attrName, this, context )
-    
+
   model_info = Backrub._resolveIsModel attrName, this
   model_info.bind ->
     if execContext.isAlive()
@@ -362,8 +362,8 @@ Handlebars.registerHelper "bind", (attrName, context)->
 
 #
 # Bind attributes helper
-# This helper is used to bind attributes to an HTML element in 
-# your template. Bind attributes will create a data-baid to keep 
+# This helper is used to bind attributes to an HTML element in
+# your template. Bind attributes will create a data-baid to keep
 # track of the element for further updates.
 #
 Handlebars.registerHelper "bindAttr", (context)->
@@ -387,7 +387,7 @@ Handlebars.registerHelper "unless", (attr, context)->
   inverse = context.inverse
   context.fn = inverse
   context.inverse = fn
-  
+
   _.bind(Backrub._bindIf, this)( attr, context )
 
 #
@@ -403,16 +403,16 @@ Handlebars.registerHelper "collection", (attr, context)->
   collection = Backrub._resolveValue attr, this
   if not collection.each?
     throw new Error "not a backbone collection!"
-  
+
   options = context.hash
   colViewPath = options?.colView
   colView = Backrub._getPath(colViewPath) if colViewPath
   colTagName = options?.colTag || "ul"
-  
+
   itemViewPath = options?.itemView
   itemView = Backrub._getPath(itemViewPath) if itemViewPath
   itemTagName = options?.itemTag || "li"
-  
+
   # filter col/items arguments
   # TODO would it be possible to use bindAttr for col/item attributes
   colAtts = {}
@@ -423,9 +423,9 @@ Handlebars.registerHelper "collection", (attr, context)->
       colAtts[k.substring(3).toLowerCase()] = v
     else if k.indexOf( "item" ) is 0
       itemAtts[k.substring(4).toLowerCase()] = v
-  
-  view = if colView 
-    Backrub._createView colView, 
+
+  view = if colView
+    Backrub._createView colView,
       model: collection
       attributes: colAtts
       context: context
@@ -438,15 +438,15 @@ Handlebars.registerHelper "collection", (attr, context)->
       model : this
       context: context
   execContext.addView view
-  
+
   views = {}
-  
+
   #
   # Item view setup closure
   #
   item_view = (m)->
     mview = if itemView
-      Backrub._createView itemView, 
+      Backrub._createView itemView,
         model: m
         attributes: itemAtts
         context: context
@@ -458,13 +458,13 @@ Handlebars.registerHelper "collection", (attr, context)->
         model: m
         context: context
     execContext.addView mview
-    
+
     #
     # Render the item view using the template
     #
     mview.render = ()-> @span context(@, {data:context.data})
     return mview
-  
+
   #
   # Container view setup closure
   #
@@ -482,9 +482,9 @@ Handlebars.registerHelper "collection", (attr, context)->
       rendered = _.map childViews, (v)->
         v.render()
       new Handlebars.SafeString @span( rendered.join("\n") )
-  
+
   setup(collection, view, views)
-  
+
   collection.bind "refresh", ()->
     if execContext.isAlive()
       # dump everything and resetup the view
@@ -499,7 +499,10 @@ Handlebars.registerHelper "collection", (attr, context)->
       # Call make alive to keep track of new views.
       mview = item_view m
       views[m.cid] = mview
-      view.live().prepend(mview.render())
+      if options.prepend isnt undefined
+        view.live().prepend(mview.render())
+      else
+        view.live().append(mview.render())
       execContext.makeAlive()
   collection.bind "remove", (m)->
     if execContext.isAlive()
