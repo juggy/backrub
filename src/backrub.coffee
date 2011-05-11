@@ -499,7 +499,7 @@ Handlebars.registerHelper "collection", (attr, context)->
       # Call make alive to keep track of new views.
       mview = item_view m
       views[m.cid] = mview
-      view.live().append(mview.render())
+      view.live().prepend(mview.render())
       execContext.makeAlive()
   collection.bind "remove", (m)->
     if execContext.isAlive()
