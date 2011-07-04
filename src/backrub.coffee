@@ -234,7 +234,7 @@ Backbone.dependencies = (onHash, base)->
 #
 # Setup dependencies in the backbone prototype for nice syntax
 #
-for proto in [Backbone.Model.prototype, Backbone.Controller.prototype, Backbone.Collection.prototype, Backbone.View.prototype]
+for proto in [Backbone.Model.prototype, Backbone.Router.prototype, Backbone.Collection.prototype, Backbone.View.prototype]
   _.extend proto, {dependencies: Backbone.dependencies}
 
 
@@ -485,7 +485,7 @@ Handlebars.registerHelper "collection", (attr, context)->
 
   setup(collection, view, views)
 
-  collection.bind "refresh", ()->
+  collection.bind "reset", ()->
     if execContext.isAlive()
       # dump everything and resetup the view
       # Call make alive to keep track of new views.
