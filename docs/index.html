@@ -1,0 +1,361 @@
+<!DOCTYPE html>  <html> <head>   <title>backrub.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               backrub.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="nv">Backrub =</span>
+  <span class="nv">_Genuine : </span>
+    <span class="nv">nameLookup : </span><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">JavaScriptCompiler</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">nameLookup</span>
+    <span class="nv">mustache : </span><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">Compiler</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">mustache</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>Get a path within the base object (or window if undefined)</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">_getPath : </span><span class="nf">(path, base, wrap)-&gt;</span>
+    <span class="nv">wrap = </span><span class="nx">wrap</span> <span class="o">||</span> <span class="kc">false</span>
+    <span class="nv">base = </span><span class="nx">base</span> <span class="o">||</span> <span class="nb">window</span>
+    <span class="nv">prev = </span><span class="nx">base</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;Path is undefined or null&quot;</span> <span class="k">if</span> <span class="nx">path</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">or</span> <span class="nx">path</span> <span class="o">is</span> <span class="kc">undefined</span>
+    <span class="nv">parts = </span><span class="nx">path</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> 
+    <span class="nx">_</span><span class="p">.</span><span class="nx">each</span> <span class="nx">parts</span><span class="p">,</span> <span class="nf">(p)-&gt;</span>
+      <span class="nv">prev = </span><span class="nx">base</span>
+      <span class="nv">base = </span><span class="k">if</span> <span class="nx">p</span> <span class="o">is</span> <span class="s2">&quot;&quot;</span> <span class="k">then</span> <span class="nx">base</span> <span class="k">else</span> <span class="nx">base</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span>
+      <span class="k">if</span> <span class="o">!</span><span class="nx">base</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;cannot find given path &#39;#{path}&#39;&quot;</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="k">typeof</span><span class="p">(</span> <span class="nx">base</span> <span class="p">)</span> <span class="o">is</span> <span class="s2">&quot;function&quot;</span> <span class="o">and</span> <span class="nx">wrap</span>
+      <span class="nx">_</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span> <span class="nx">base</span><span class="p">,</span> <span class="nx">prev</span> <span class="p">)</span>
+    <span class="k">else</span>
+      <span class="nx">base</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>Resolve a value properly in the model</p>
+
+<p>Backbone models are not plain javascript object so you cannot
+simply follow the path, you need to call get on the model.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">_resolveValue : </span><span class="nf">(attr, model)-&gt;</span>
+    <span class="nv">model_info = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_resolveIsModel</span> <span class="nx">attr</span><span class="p">,</span> <span class="nx">model</span>
+    <span class="k">if</span> <span class="nx">model_info</span><span class="p">.</span><span class="nx">is_model</span>
+      <span class="nx">model_info</span><span class="p">.</span><span class="nx">model</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">model_info</span><span class="p">.</span><span class="nx">attr</span><span class="p">)</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="nx">model_info</span><span class="p">.</span><span class="nx">is_model</span> <span class="o">is</span> <span class="kc">null</span>
+      <span class="nx">attr</span>
+    <span class="k">else</span>
+      <span class="nv">value = </span><span class="k">try</span>
+        <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_getPath</span> <span class="nx">model_info</span><span class="p">.</span><span class="nx">attr</span><span class="p">,</span> <span class="nx">model_info</span><span class="p">.</span><span class="nx">model</span><span class="p">,</span> <span class="kc">true</span>
+      <span class="k">catch</span> <span class="nx">error</span>
+      
+      <span class="k">if</span> <span class="k">typeof</span><span class="p">(</span> <span class="nx">value</span> <span class="p">)</span> <span class="o">is</span> <span class="s2">&quot;function&quot;</span> <span class="k">then</span> <span class="nx">value</span><span class="p">()</span> <span class="k">else</span> <span class="nx">value</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>Determine if the attribute is a model attribute or view attribute
+If the attribute is preceded by @ it is considered a model attr.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">_resolveIsModel : </span><span class="nf">(attr, model)-&gt;</span>
+    <span class="nv">is_model = </span><span class="kc">false</span>
+    <span class="nv">attr = </span><span class="k">if</span> <span class="nx">attr</span> <span class="o">and</span> <span class="p">(</span><span class="nx">attr</span><span class="p">.</span><span class="nx">charAt</span><span class="o">?</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">is</span> <span class="s2">&quot;@&quot;</span><span class="p">)</span>
+      <span class="nv">is_model = </span><span class="kc">true</span>
+      <span class="nv">model = </span><span class="nx">model</span><span class="p">.</span><span class="nx">model</span>
+      <span class="nx">attr</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="nx">attr</span> <span class="o">and</span> <span class="nx">model</span><span class="p">.</span><span class="nx">model</span> <span class="o">and</span> <span class="nx">model</span><span class="p">.</span><span class="nx">model</span><span class="p">.</span><span class="nx">get</span> <span class="o">and</span> <span class="nx">model</span><span class="p">.</span><span class="nx">model</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">attr</span><span class="p">)</span> <span class="o">isnt</span> <span class="kc">undefined</span>
+      <span class="nv">is_model = </span><span class="kc">true</span>
+      <span class="nv">model = </span><span class="nx">model</span><span class="p">.</span><span class="nx">model</span>
+      <span class="nx">attr</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="nx">model</span><span class="p">[</span><span class="nx">attr</span><span class="p">]</span> <span class="o">isnt</span> <span class="kc">undefined</span>
+      <span class="nx">attr</span>
+    <span class="k">else</span>
+      <span class="nv">model = </span><span class="kc">null</span>
+      <span class="nv">is_model = </span><span class="kc">null</span>
+      <span class="nx">attr</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p>return an object with a convenient bind method that check the presence of a model</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">is_model: </span><span class="nx">is_model</span>
+    <span class="nv">attr: </span><span class="nx">attr</span>
+    <span class="nv">model: </span><span class="nx">model</span>
+    <span class="nv">bind: </span><span class="nf">(callback)-&gt;</span>
+      <span class="k">if</span> <span class="nx">model</span> <span class="o">and</span> <span class="nx">model</span><span class="p">.</span><span class="nx">bind</span> 
+        <span class="nx">model</span><span class="p">.</span><span class="nx">bind</span> <span class="s2">&quot;change:#{attr}&quot;</span><span class="p">,</span> <span class="nx">callback</span></pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <p>Used by if and unless helpers to render the and listen changes</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">_bindIf : </span><span class="nf">(attr, context)-&gt;</span>
+    <span class="k">if</span> <span class="nx">context</span> 
+      <span class="nv">view = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_createBindView</span><span class="p">(</span> <span class="nx">attr</span><span class="p">,</span> <span class="k">this</span><span class="p">,</span> <span class="nx">context</span><span class="p">)</span>
+        
+      <span class="nv">model_info = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_resolveIsModel</span> <span class="nx">attr</span><span class="p">,</span> <span class="k">this</span>
+      
+      <span class="nx">model_info</span><span class="p">.</span><span class="nx">bind</span> <span class="o">-&gt;</span>
+        <span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">exec</span><span class="p">.</span><span class="nx">isAlive</span><span class="p">()</span>
+          <span class="nx">view</span><span class="p">.</span><span class="nx">rerender</span><span class="p">()</span>
+          <span class="nx">context</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">exec</span><span class="p">.</span><span class="nx">makeAlive</span><span class="p">()</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>setup the render to check for truth of the value</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nv">view.render = </span><span class="o">-&gt;</span>
+        <span class="nv">fn = </span><span class="k">if</span> <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_resolveValue</span><span class="p">(</span> <span class="nx">@attr</span><span class="p">,</span> <span class="nx">@model</span> <span class="p">)</span> <span class="k">then</span> <span class="nx">context</span><span class="p">.</span><span class="nx">fn</span> <span class="k">else</span> <span class="nx">context</span><span class="p">.</span><span class="nx">inverse</span>
+        <span class="k">new</span> <span class="nx">Handlebars</span><span class="p">.</span><span class="nx">SafeString</span> <span class="nx">@span</span><span class="p">(</span> <span class="nx">fn</span><span class="p">(</span><span class="nx">@model</span><span class="p">,</span> <span class="p">{</span><span class="nx">data</span><span class="o">:</span><span class="nx">context</span><span class="p">.</span><span class="nx">data</span><span class="p">})</span> <span class="p">)</span>
+    
+      <span class="nx">view</span><span class="p">.</span><span class="nx">render</span><span class="p">()</span>
+    <span class="k">else</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;No block is provided!&quot;</span></pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">_bindAttr : </span><span class="nf">(attrs, context, model)-&gt;</span>
+    <span class="nv">id = </span><span class="nx">_</span><span class="p">.</span><span class="nx">uniqueId</span><span class="p">(</span><span class="s1">&#39;ba&#39;</span><span class="p">)</span>
+    <span class="nv">outAttrs = </span><span class="p">[]</span>
+    <span class="nv">self = </span><span class="nx">model</span> <span class="o">||</span> <span class="k">this</span></pre></div>             </td>           </tr>                               <tr id="section-9">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-9">&#182;</a>               </div>               <p>go thru every attributes in the hash</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nx">_</span><span class="p">.</span><span class="nx">each</span> <span class="nx">attrs</span><span class="p">,</span> <span class="nf">(attr, k)-&gt;</span>
+      <span class="nv">model_info = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_resolveIsModel</span> <span class="nx">attr</span><span class="p">,</span> <span class="nx">self</span>
+      <span class="nv">value = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_resolveValue</span> <span class="nx">attr</span><span class="p">,</span> <span class="nx">self</span>
+      <span class="nx">outAttrs</span><span class="p">.</span><span class="nx">push</span> <span class="s2">&quot;#{k}=\&quot;#{value}\&quot;&quot;</span></pre></div>             </td>           </tr>                               <tr id="section-10">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-10">&#182;</a>               </div>               <p>handle change events</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">model_info</span><span class="p">.</span><span class="nx">bind</span> <span class="o">-&gt;</span>
+        <span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">exec</span><span class="p">.</span><span class="nx">isAlive</span><span class="p">()</span>
+          <span class="nv">el = </span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;[data-baid=&#39;#{id}&#39;]&quot;</span><span class="p">)</span>
+          <span class="k">if</span> <span class="nx">el</span><span class="p">.</span><span class="nx">length</span> <span class="o">is</span> <span class="mi">0</span>
+            <span class="nx">model_info</span><span class="p">.</span><span class="nx">model</span><span class="p">.</span><span class="nx">unbind</span> <span class="s2">&quot;change#{model_info.attr}&quot;</span>
+          <span class="k">else</span>
+            <span class="nx">el</span><span class="p">.</span><span class="nx">attr</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_resolveValue</span> <span class="nx">attr</span><span class="p">,</span> <span class="nx">self</span>
+  
+    <span class="k">if</span> <span class="nx">outAttrs</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span>
+      <span class="nx">outAttrs</span><span class="p">.</span><span class="nx">push</span> <span class="s2">&quot;data-baid=\&quot;#{id}\&quot;&quot;</span>
+     
+    <span class="k">new</span> <span class="nx">Handlebars</span><span class="p">.</span><span class="nx">SafeString</span> <span class="nx">outAttrs</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-11">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-11">&#182;</a>               </div>               <p>Create a backbone view with the specified prototype.
+It adds <em>span</em>, <em>live</em>, <em>textAttributes</em> and <em>bvid</em> attributes
+to the view.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">_createView : </span><span class="nf">(viewProto, options)-&gt;</span>
+    
+    <span class="nv">v = </span><span class="k">new</span> <span class="nx">viewProto</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;Cannot instantiate view&quot;</span> <span class="k">if</span> <span class="o">!</span><span class="nx">v</span>
+    <span class="nv">v._ensureElement = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_BindView</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">_ensureElement</span>
+    <span class="nv">v.span = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_BindView</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">span</span>
+    <span class="nv">v.live = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_BindView</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">live</span>
+    <span class="nv">v.textAttributes = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_BindView</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">textAttributes</span>
+    <span class="nv">v.bvid = </span><span class="s2">&quot;#{_.uniqueId(&#39;bv&#39;)}&quot;</span>
+    <span class="k">return</span> <span class="nx">v</span></pre></div>             </td>           </tr>                               <tr id="section-12">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-12">&#182;</a>               </div>               <p>Create a bind view and parse the hash properly</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">_createBindView : </span><span class="nf">(attr, model, context)-&gt;</span>
+    <span class="nv">view = </span><span class="k">new</span> <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_BindView</span>
+      <span class="nv">attr  : </span><span class="nx">attr</span>
+      <span class="nv">model : </span><span class="nx">model</span>
+      <span class="nv">context: </span><span class="nx">context</span>
+      <span class="nv">prevThis: </span><span class="nx">model</span>
+    <span class="nx">context</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">exec</span><span class="p">.</span><span class="nx">addView</span> <span class="nx">view</span>
+    
+    <span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nx">hash</span>
+      <span class="nv">view.tagName = </span><span class="nx">context</span><span class="p">.</span><span class="nx">hash</span><span class="p">.</span><span class="nx">tag</span> <span class="o">||</span> <span class="nx">view</span><span class="p">.</span><span class="nx">tagName</span>
+      <span class="k">delete</span> <span class="nx">context</span><span class="p">.</span><span class="nx">hash</span><span class="p">.</span><span class="nx">tag</span>
+      <span class="nv">view.attributes = </span><span class="nx">context</span><span class="p">.</span><span class="nx">hash</span>
+      
+    <span class="nx">view</span></pre></div>             </td>           </tr>                               <tr id="section-13">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-13">&#182;</a>               </div>               <p>Lightweight span based view to encapsulate the different helpers
+A unique id is used to retrieve the view for update</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">_BindView : </span><span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">extend</span>
+    <span class="nv">tagName : </span><span class="s2">&quot;span&quot;</span></pre></div>             </td>           </tr>                               <tr id="section-14">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-14">&#182;</a>               </div>               <p>_ensureElement is a noop to avoid creating tons of elements for nothing while
+building the template.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_ensureElement: </span><span class="o">-&gt;</span>
+      <span class="kc">null</span>
+    <span class="nv">live : </span><span class="o">-&gt;</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;[data-bvid=&#39;#{@bvid}&#39;]&quot;</span><span class="p">)</span>
+    <span class="nv">initialize: </span><span class="o">-&gt;</span> 
+      <span class="nx">_</span><span class="p">.</span><span class="nx">bindAll</span> <span class="k">this</span><span class="p">,</span> <span class="s2">&quot;render&quot;</span><span class="p">,</span> <span class="s2">&quot;rerender&quot;</span><span class="p">,</span> <span class="s2">&quot;span&quot;</span><span class="p">,</span> <span class="s2">&quot;live&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;textAttributes&quot;</span>
+      <span class="vi">@bvid = </span><span class="s2">&quot;#{_.uniqueId(&#39;bv&#39;)}&quot;</span>
+      <span class="vi">@attr = </span><span class="nx">@options</span><span class="p">.</span><span class="nx">attr</span>
+      <span class="vi">@prevThis = </span><span class="nx">@options</span><span class="p">.</span><span class="nx">prevThis</span>
+      <span class="vi">@hbContext = </span><span class="nx">@options</span><span class="p">.</span><span class="nx">context</span>
+    <span class="nv">value: </span><span class="o">-&gt;</span>
+      <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_resolveValue</span> <span class="nx">@attr</span><span class="p">,</span> <span class="nx">@model</span>
+    <span class="nv">textAttributes: </span><span class="o">-&gt;</span>
+      <span class="vi">@attributes = </span><span class="nx">@attributes</span> <span class="o">||</span> <span class="nx">@options</span><span class="p">.</span><span class="nx">attributes</span> <span class="o">||</span> <span class="p">{}</span>
+      <span class="vi">@attributes.id = </span><span class="nx">@id</span> <span class="k">if</span> <span class="o">!</span><span class="p">(</span><span class="nx">@attributes</span><span class="p">.</span><span class="nx">id</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">@id</span>
+      <span class="vi">@attributes.class = </span><span class="nx">@className</span> <span class="k">if</span> <span class="o">!</span><span class="nx">@attributes</span><span class="p">.</span><span class="k">class</span> <span class="o">&amp;&amp;</span> <span class="nx">@className</span>
+      <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_bindAttr</span><span class="p">(</span><span class="nx">@attributes</span><span class="p">,</span> <span class="nx">@hbContext</span><span class="p">,</span> <span class="nx">@prevThis</span> <span class="o">||</span> <span class="k">this</span><span class="p">).</span><span class="nx">string</span>
+    <span class="nv">span: </span><span class="nf">(inner)-&gt;</span>
+      <span class="s2">&quot;&lt;#{@tagName} #{@textAttributes()} data-bvid=\&quot;#{@bvid}\&quot;&gt;#{inner}&lt;/#{@tagName}&gt;&quot;</span>
+    <span class="nv">rerender : </span><span class="o">-&gt;</span>
+      <span class="nx">@live</span><span class="p">().</span><span class="nx">replaceWith</span> <span class="nx">@render</span><span class="p">().</span><span class="nx">string</span>
+    <span class="nv">render  : </span><span class="o">-&gt;</span> 
+      <span class="k">new</span> <span class="nx">Handlebars</span><span class="p">.</span><span class="nx">SafeString</span> <span class="nx">@span</span><span class="p">(</span> <span class="nx">@value</span><span class="p">()</span> <span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-15">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-15">&#182;</a>               </div>               <p>See handlebars code. This override mustache so that
+it will call the bind helper to resolve single value
+mustaches.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">Handlebars.Compiler.prototype.mustache = </span><span class="nf">(mustache)-&gt;</span>
+  <span class="k">if</span> <span class="nx">mustache</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">length</span> <span class="o">||</span> <span class="nx">mustache</span><span class="p">.</span><span class="nx">hash</span>
+    <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_Genuine</span><span class="p">.</span><span class="nx">mustache</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">mustache</span><span class="p">);</span>
+  <span class="k">else</span>
+    <span class="nv">id = </span><span class="k">new</span> <span class="nx">Handlebars</span><span class="p">.</span><span class="nx">AST</span><span class="p">.</span><span class="nx">IdNode</span><span class="p">([</span><span class="s1">&#39;bind&#39;</span><span class="p">]);</span>
+    <span class="nv">mustache = </span><span class="k">new</span> <span class="nx">Handlebars</span><span class="p">.</span><span class="nx">AST</span><span class="p">.</span><span class="nx">MustacheNode</span><span class="p">([</span><span class="nx">id</span><span class="p">].</span><span class="nx">concat</span><span class="p">([</span><span class="nx">mustache</span><span class="p">.</span><span class="nx">id</span><span class="p">]),</span> <span class="nx">mustache</span><span class="p">.</span><span class="nx">hash</span><span class="p">,</span> <span class="o">!</span><span class="nx">mustache</span><span class="p">.</span><span class="nx">escaped</span><span class="p">);</span>
+    <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_Genuine</span><span class="p">.</span><span class="nx">mustache</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">mustache</span><span class="p">);</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-16">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-16">&#182;</a>               </div>               <p>See handlebars code.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">Handlebars.JavaScriptCompiler.prototype.nameLookup = </span> <span class="nf">(parent, name, type)-&gt;</span>
+  <span class="k">if</span> <span class="nx">type</span> <span class="o">is</span> <span class="s1">&#39;context&#39;</span> 
+    <span class="s2">&quot;\&quot;#{name}\&quot;&quot;</span>
+  <span class="k">else</span>
+    <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_Genuine</span><span class="p">.</span><span class="nx">nameLookup</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">parent</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">type</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-17">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-17">&#182;</a>               </div>               <p>Call this within the initialize function of your View, Controller, Model.
+It will look at all the attributes for <em>base</em> that have been marked as 
+dependent on some <em>event</em> and make sure a change:attribute<em>name event 
+will be trigger on the object defined by the _path</em></p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">Backbone.dependencies = </span><span class="nf">(onHash, base)-&gt;</span>
+  <span class="nv">base = </span><span class="nx">base</span> <span class="o">||</span> <span class="k">this</span>
+  <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;Not a Backbone.Event object&quot;</span> <span class="k">if</span> <span class="o">!</span><span class="nx">base</span><span class="p">.</span><span class="nx">trigger</span> <span class="o">and</span> <span class="o">!</span><span class="nx">base</span><span class="p">.</span><span class="nx">bind</span>
+  <span class="nv">setupEvent = </span><span class="nf">(event, path)-&gt;</span>
+    <span class="nv">parts = </span><span class="nx">event</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+    <span class="nv">attr = </span><span class="nx">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="nv">object = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_getPath</span><span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">base</span><span class="p">)</span>
+    <span class="k">for</span> <span class="nx">e</span> <span class="k">in</span> <span class="nx">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">..]</span>
+      <span class="nx">object</span><span class="o">?</span><span class="p">.</span><span class="nx">bind</span> <span class="nx">e</span><span class="p">,</span> <span class="o">-&gt;</span>
+        <span class="nx">base</span><span class="p">.</span><span class="nx">trigger</span> <span class="s2">&quot;change:#{attr}&quot;</span>
+    
+  <span class="k">for</span> <span class="nx">event</span><span class="p">,</span> <span class="nx">path</span> <span class="k">of</span> <span class="nx">onHash</span>
+    <span class="nx">setupEvent</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">path</span><span class="p">)</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-18">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-18">&#182;</a>               </div>               <p>Setup dependencies in the backbone prototype for nice syntax</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="k">for</span> <span class="nx">proto</span> <span class="k">in</span> <span class="p">[</span><span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Controller</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">prototype</span><span class="p">]</span>
+  <span class="nx">_</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">proto</span><span class="p">,</span> <span class="p">{</span><span class="nv">dependencies: </span><span class="nx">Backbone</span><span class="p">.</span><span class="nx">dependencies</span><span class="p">}</span>
+
+ 
+<span class="nv">Backbone.Backrub = </span><span class="nf">(template)-&gt;</span>
+  <span class="nx">_</span><span class="p">.</span><span class="nx">bindAll</span> <span class="err">@</span><span class="p">,</span> <span class="s2">&quot;addView&quot;</span><span class="p">,</span> <span class="s2">&quot;render&quot;</span><span class="p">,</span> <span class="s2">&quot;makeAlive&quot;</span><span class="p">,</span> <span class="s2">&quot;isAlive&quot;</span>
+  <span class="vi">@compiled = </span><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">compile</span><span class="p">(</span> <span class="nx">template</span><span class="p">,</span> <span class="p">{</span><span class="nv">data: </span><span class="kc">true</span><span class="p">,</span> <span class="nv">stringParams: </span><span class="kc">true</span><span class="p">}</span> <span class="p">)</span>
+  <span class="vi">@_createdViews = </span><span class="p">{}</span>
+  <span class="vi">@_aliveViews = </span><span class="p">{}</span>
+  <span class="vi">@_alive = </span><span class="kc">false</span>
+  <span class="k">return</span> <span class="err">@</span>
+  
+<span class="nx">_</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span> </pre></div>             </td>           </tr>                               <tr id="section-19">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-19">&#182;</a>               </div>               <p>Execute a templae given some options</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">render: </span><span class="nf">(options)-&gt;</span>
+    <span class="nv">self = </span><span class="k">this</span>
+    <span class="nx">@compiled</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="p">{</span><span class="nx">data</span><span class="o">:</span><span class="p">{</span><span class="nv">exec : </span><span class="err">@</span><span class="p">}})</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-20">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-20">&#182;</a>               </div>               <p>Make Alive will properly handle the delgation of 
+events based on Backbone conventions. By default,
+it will use the body element to find created elements
+but you can also give a base element to query from.
+This is useful when your template is appended to a 
+DOM element that wasn't inserted into the page yet.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">makeAlive: </span><span class="nf">(base)-&gt;</span>
+    <span class="nv">base = </span><span class="nx">base</span> <span class="o">||</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;body&quot;</span><span class="p">)</span>
+    <span class="nv">query = </span><span class="p">[]</span>
+    <span class="nv">currentViews = </span><span class="nx">@_createdViews</span>
+    <span class="vi">@_createdViews = </span><span class="p">{}</span>
+    
+    <span class="nx">_</span><span class="p">.</span><span class="nx">each</span> <span class="nx">currentViews</span><span class="p">,</span> <span class="nf">(view, bvid)-&gt;</span>
+      <span class="nx">query</span><span class="p">.</span><span class="nx">push</span> <span class="s2">&quot;[data-bvid=&#39;#{bvid}&#39;]&quot;</span>
+    
+    <span class="vi">@_alive = </span><span class="kc">true</span>
+    <span class="nv">self = </span><span class="err">@</span>
+    <span class="nx">$</span><span class="p">(</span><span class="nx">query</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span> <span class="s2">&quot;,&quot;</span> <span class="p">),</span> <span class="nx">base</span><span class="p">).</span><span class="nx">each</span> <span class="o">-&gt;</span>
+      <span class="nv">el = </span><span class="nx">$</span><span class="p">(</span><span class="err">@</span><span class="p">)</span>
+      <span class="nv">view = </span><span class="nx">currentViews</span><span class="p">[</span><span class="nx">el</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span> <span class="s2">&quot;data-bvid&quot;</span> <span class="p">)]</span>
+      <span class="nv">view.el = </span><span class="nx">el</span>
+      <span class="nx">view</span><span class="p">.</span><span class="nx">delegateEvents</span><span class="p">()</span>
+      <span class="nx">view</span><span class="p">.</span><span class="nx">alive</span><span class="o">?</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">view</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-21">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-21">&#182;</a>               </div>               <p>move alive views away for other makeAlive passes</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nx">_</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">@_aliveViews</span><span class="p">,</span> <span class="nx">currentViews</span>
+  
+  
+  <span class="nv">isAlive: </span><span class="o">-&gt;</span>
+    <span class="nx">@_alive</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-22">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-22">&#182;</a>               </div>               <p>Internal API to add view to the context</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">addView : </span><span class="nf">(view)-&gt;</span>
+    <span class="nx">@_createdViews</span><span class="p">[</span><span class="nx">view</span><span class="p">.</span><span class="nx">bvid</span><span class="p">]</span> <span class="o">=</span> <span class="nx">view</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-23">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-23">&#182;</a>               </div>               <p>Internal API to remove view formt he tracking list</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">removeView : </span><span class="nf">(view)-&gt;</span>
+    <span class="k">delete</span> <span class="nx">@_createdViews</span><span class="p">[</span><span class="nx">view</span><span class="p">.</span><span class="nx">bvid</span><span class="p">]</span>
+    <span class="k">delete</span> <span class="nx">@_aliveViews</span><span class="p">[</span><span class="nx">view</span><span class="p">.</span><span class="nx">bvid</span><span class="p">]</span>
+    <span class="k">delete</span> <span class="nx">view</span></pre></div>             </td>           </tr>                               <tr id="section-24">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-24">&#182;</a>               </div>               <p>A simple Backbone.View to wrap around the Backbone.Backrub API
+You can use this view as any other view within backbone. Call
+render as you would normally</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">Backbone.TemplateView = </span><span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">extend</span>
+  <span class="nv">initialize: </span><span class="nf">(options)-&gt;</span>
+    <span class="vi">@template = </span><span class="nx">@template</span> <span class="o">||</span> <span class="nx">options</span><span class="p">.</span><span class="nx">template</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;Template is missing&quot;</span> <span class="k">if</span> <span class="o">!</span><span class="nx">@template</span>
+    <span class="vi">@compile = </span><span class="k">new</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Backrub</span><span class="p">(</span><span class="nx">@template</span><span class="p">)</span>
+  
+  <span class="nv">render : </span><span class="o">-&gt;</span>
+    <span class="k">try</span>
+      <span class="nx">$</span><span class="p">(</span><span class="nx">@el</span><span class="p">).</span><span class="nx">html</span> <span class="nx">@compile</span><span class="p">.</span><span class="nx">render</span> <span class="err">@</span>
+      <span class="nx">@compile</span><span class="p">.</span><span class="nx">makeAlive</span> <span class="nx">@el</span>
+    <span class="k">catch</span> <span class="nx">e</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">error</span> <span class="nx">e</span><span class="p">.</span><span class="nx">stack</span>
+    <span class="nx">@el</span></pre></div>             </td>           </tr>                               <tr id="section-25">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-25">&#182;</a>               </div>               <p>View helper
+You can reference your backbone views in the template to 
+add extra logic and events. Use this helper with the view
+name (as accessible within the window object). You can give it
+a hash with the usual backbone options (model, id, etc.)
+The render method is redefined. A rendered event is sent but 
+within the templating loop (elements are not on the document yet)</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">registerHelper</span> <span class="s2">&quot;view&quot;</span><span class="p">,</span> <span class="nf">(viewName, context)-&gt;</span>
+  <span class="nv">execContext = </span><span class="nx">context</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">exec</span>
+  <span class="nv">view = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_getPath</span><span class="p">(</span><span class="nx">viewName</span><span class="p">)</span>
+  <span class="nv">resolvedOptions = </span><span class="p">{}</span>
+  <span class="k">for</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="k">of</span> <span class="nx">context</span><span class="p">.</span><span class="nx">hash</span>
+    <span class="nx">resolvedOptions</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_resolveValue</span><span class="p">(</span><span class="nx">val</span><span class="p">,</span> <span class="k">this</span><span class="p">)</span> <span class="o">||</span> <span class="nx">val</span>
+
+  <span class="nv">v = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_createView</span> <span class="nx">view</span><span class="p">,</span> <span class="nx">resolvedOptions</span>
+  <span class="nx">execContext</span><span class="p">.</span><span class="nx">addView</span> <span class="nx">v</span>
+  <span class="nv">v.render = </span><span class="nf">()-&gt;</span> 
+    <span class="k">new</span> <span class="nx">Handlebars</span><span class="p">.</span><span class="nx">SafeString</span> <span class="nx">@span</span><span class="p">(</span> <span class="nx">context</span><span class="p">(</span><span class="err">@</span><span class="p">,</span> <span class="p">{</span><span class="nx">data</span><span class="o">:</span><span class="nx">context</span><span class="p">.</span><span class="nx">data</span><span class="p">})</span> <span class="p">)</span>
+  <span class="nx">v</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-26">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-26">&#182;</a>               </div>               <p>Bind helper
+Bind a value from the view or the model to the template.
+When the value changes ("change:<em>attribute</em>" events) only this part
+of the template will be rerendered. Bind will create a new <span>
+node to keep track of what to refresh.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">registerHelper</span> <span class="s2">&quot;bind&quot;</span><span class="p">,</span> <span class="nf">(attrName, context)-&gt;</span>
+  <span class="nv">execContext = </span><span class="nx">context</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">exec</span>
+  <span class="nv">view = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_createBindView</span><span class="p">(</span> <span class="nx">attrName</span><span class="p">,</span> <span class="k">this</span><span class="p">,</span> <span class="nx">context</span> <span class="p">)</span>
+    
+  <span class="nv">model_info = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_resolveIsModel</span> <span class="nx">attrName</span><span class="p">,</span> <span class="k">this</span>
+  <span class="nx">model_info</span><span class="p">.</span><span class="nx">bind</span> <span class="o">-&gt;</span>
+    <span class="k">if</span> <span class="nx">execContext</span><span class="p">.</span><span class="nx">isAlive</span><span class="p">()</span>
+      <span class="nx">view</span><span class="p">.</span><span class="nx">rerender</span><span class="p">()</span>
+      <span class="nx">execContext</span><span class="p">.</span><span class="nx">makeAlive</span><span class="p">()</span>
+  <span class="k">new</span> <span class="nx">Handlebars</span><span class="p">.</span><span class="nx">SafeString</span> <span class="nx">view</span><span class="p">.</span><span class="nx">render</span><span class="p">()</span></pre></div>             </td>           </tr>                               <tr id="section-27">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-27">&#182;</a>               </div>               <p>Bind attributes helper
+This helper is used to bind attributes to an HTML element in 
+your template. Bind attributes will create a data-baid to keep 
+track of the element for further updates.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">registerHelper</span> <span class="s2">&quot;bindAttr&quot;</span><span class="p">,</span> <span class="nf">(context)-&gt;</span>
+  <span class="nx">_</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_bindAttr</span><span class="p">,</span> <span class="k">this</span><span class="p">)(</span><span class="nx">context</span><span class="p">.</span><span class="nx">hash</span><span class="p">,</span> <span class="nx">context</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-28">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-28">&#182;</a>               </div>               <p>Bounded if
+A if/else statement that will listen for changes and update
+accordingly. Uses bind so a <span> will be created</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">registerHelper</span> <span class="s2">&quot;if&quot;</span><span class="p">,</span> <span class="nf">(attr, context )-&gt;</span>
+  <span class="nx">_</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_bindIf</span><span class="p">,</span> <span class="k">this</span><span class="p">)(</span> <span class="nx">attr</span><span class="p">,</span> <span class="nx">context</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-29">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-29">&#182;</a>               </div>               <p>Bounded unless
+A unless/else statement that will listen for changes and update
+accordingly. Uses bind so a <span> will be created</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">registerHelper</span> <span class="s2">&quot;unless&quot;</span><span class="p">,</span> <span class="nf">(attr, context)-&gt;</span>
+  <span class="nv">fn = </span><span class="nx">context</span><span class="p">.</span><span class="nx">fn</span>
+  <span class="nv">inverse = </span><span class="nx">context</span><span class="p">.</span><span class="nx">inverse</span>
+  <span class="nv">context.fn = </span><span class="nx">inverse</span>
+  <span class="nv">context.inverse = </span><span class="nx">fn</span>
+  
+  <span class="nx">_</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_bindIf</span><span class="p">,</span> <span class="k">this</span><span class="p">)(</span> <span class="nx">attr</span><span class="p">,</span> <span class="nx">context</span> <span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-30">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-30">&#182;</a>               </div>               <p>Bounded each
+A each helper to iterate on a Backbone Collection and
+update any refresh/add/remove events. <span> will be created
+for the overall collection and each of its items to keep track
+of what to refresh.
+Do not know what will happen with sorting...</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">registerHelper</span> <span class="s2">&quot;collection&quot;</span><span class="p">,</span> <span class="nf">(attr, context)-&gt;</span>
+  <span class="nv">execContext = </span><span class="nx">context</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">exec</span>
+  <span class="nv">collection = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_resolveValue</span> <span class="nx">attr</span><span class="p">,</span> <span class="k">this</span>
+  <span class="k">if</span> <span class="o">not</span> <span class="nx">collection</span><span class="p">.</span><span class="nx">each</span><span class="o">?</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s2">&quot;not a backbone collection!&quot;</span>
+  
+  <span class="nv">options = </span><span class="nx">context</span><span class="p">.</span><span class="nx">hash</span>
+  <span class="nv">colViewPath = </span><span class="nx">options</span><span class="o">?</span><span class="p">.</span><span class="nx">colView</span>
+  <span class="nv">colView = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_getPath</span><span class="p">(</span><span class="nx">colViewPath</span><span class="p">)</span> <span class="k">if</span> <span class="nx">colViewPath</span>
+  <span class="nv">colTagName = </span><span class="nx">options</span><span class="o">?</span><span class="p">.</span><span class="nx">colTag</span> <span class="o">||</span> <span class="s2">&quot;ul&quot;</span>
+  
+  <span class="nv">itemViewPath = </span><span class="nx">options</span><span class="o">?</span><span class="p">.</span><span class="nx">itemView</span>
+  <span class="nv">itemView = </span><span class="nx">Backrub</span><span class="p">.</span><span class="nx">_getPath</span><span class="p">(</span><span class="nx">itemViewPath</span><span class="p">)</span> <span class="k">if</span> <span class="nx">itemViewPath</span>
+  <span class="nv">itemTagName = </span><span class="nx">options</span><span class="o">?</span><span class="p">.</span><span class="nx">itemTag</span> <span class="o">||</span> <span class="s2">&quot;li&quot;</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-31">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-31">&#182;</a>               </div>               <p>filter col/items arguments
+TODO would it be possible to use bindAttr for col/item attributes</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">colAtts = </span><span class="p">{}</span>
+  <span class="nv">itemAtts = </span><span class="p">{}</span>
+  <span class="nx">_</span><span class="p">.</span><span class="nx">each</span> <span class="nx">options</span><span class="p">,</span> <span class="nf">(v, k) -&gt;</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="nx">k</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s2">&quot;Tag&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">or</span> <span class="nx">k</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s2">&quot;View&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="nx">k</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span> <span class="s2">&quot;col&quot;</span><span class="p">)</span> <span class="o">is</span> <span class="mi">0</span>
+      <span class="nx">colAtts</span><span class="p">[</span><span class="nx">k</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="nx">toLowerCase</span><span class="p">()]</span> <span class="o">=</span> <span class="nx">v</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="nx">k</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span> <span class="s2">&quot;item&quot;</span> <span class="p">)</span> <span class="o">is</span> <span class="mi">0</span>
+      <span class="nx">itemAtts</span><span class="p">[</span><span class="nx">k</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nx">toLowerCase</span><span class="p">()]</span> <span class="o">=</span> <span class="nx">v</span>
+  
+  <span class="nv">view = </span><span class="k">if</span> <span class="nx">colView</span> 
+    <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_createView</span> <span class="nx">colView</span><span class="p">,</span> 
+      <span class="nv">model: </span><span class="nx">collection</span>
+      <span class="nv">attributes: </span><span class="nx">colAtts</span>
+      <span class="nv">context: </span><span class="nx">context</span>
+      <span class="nv">tagName : </span><span class="k">if</span> <span class="nx">options</span><span class="o">?</span><span class="p">.</span><span class="nx">colTag</span> <span class="k">then</span> <span class="nx">colTagName</span> <span class="k">else</span> <span class="nx">colView</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">tagName</span>
+  <span class="k">else</span>
+    <span class="k">new</span> <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_BindView</span>
+      <span class="nv">tagName: </span><span class="nx">colTagName</span>
+      <span class="nv">attributes: </span><span class="nx">colAtts</span>
+      <span class="nv">attr  : </span><span class="nx">attr</span>
+      <span class="nv">model : </span><span class="k">this</span>
+      <span class="nv">context: </span><span class="nx">context</span>
+  <span class="nx">execContext</span><span class="p">.</span><span class="nx">addView</span> <span class="nx">view</span>
+  
+  <span class="nv">views = </span><span class="p">{}</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-32">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-32">&#182;</a>               </div>               <p>Item view setup closure</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">item_view = </span><span class="nf">(m)-&gt;</span>
+    <span class="nv">mview = </span><span class="k">if</span> <span class="nx">itemView</span>
+      <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_createView</span> <span class="nx">itemView</span><span class="p">,</span> 
+        <span class="nv">model: </span><span class="nx">m</span>
+        <span class="nv">attributes: </span><span class="nx">itemAtts</span>
+        <span class="nv">context: </span><span class="nx">context</span>
+        <span class="nv">tagName : </span><span class="k">if</span> <span class="nx">options</span><span class="o">?</span><span class="p">.</span><span class="nx">itemTag</span> <span class="k">then</span> <span class="nx">itemTagName</span> <span class="k">else</span> <span class="nx">itemView</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">tagName</span>
+    <span class="k">else</span>
+      <span class="k">new</span> <span class="nx">Backrub</span><span class="p">.</span><span class="nx">_BindView</span>
+        <span class="nv">tagName: </span><span class="nx">itemTagName</span>
+        <span class="nv">attributes: </span><span class="nx">itemAtts</span>
+        <span class="nv">model: </span><span class="nx">m</span>
+        <span class="nv">context: </span><span class="nx">context</span>
+    <span class="nx">execContext</span><span class="p">.</span><span class="nx">addView</span> <span class="nx">mview</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-33">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-33">&#182;</a>               </div>               <p>Render the item view using the template</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">mview.render = </span><span class="nf">()-&gt;</span> <span class="nx">@span</span> <span class="nx">context</span><span class="p">(</span><span class="err">@</span><span class="p">,</span> <span class="p">{</span><span class="nx">data</span><span class="o">:</span><span class="nx">context</span><span class="p">.</span><span class="nx">data</span><span class="p">})</span>
+    <span class="k">return</span> <span class="nx">mview</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-34">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-34">&#182;</a>               </div>               <p>Container view setup closure</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">setup = </span><span class="nf">(col, mainView, childViews) -&gt;</span></pre></div>             </td>           </tr>                               <tr id="section-35">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-35">&#182;</a>               </div>               <p>create all childs</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nx">col</span><span class="p">.</span><span class="nx">each</span> <span class="nf">(m)-&gt;</span>
+      <span class="nv">mview = </span><span class="nx">item_view</span> <span class="nx">m</span>
+      <span class="nx">childViews</span><span class="p">[</span><span class="nx">m</span><span class="p">.</span><span class="nx">cid</span><span class="p">]</span> <span class="o">=</span> <span class="nx">mview</span></pre></div>             </td>           </tr>                               <tr id="section-36">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-36">&#182;</a>               </div>               <p>Rendering for the main view simply calls render of the child
+and wrap this with the container view element.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">mainView.render = </span><span class="o">-&gt;</span>
+      <span class="nv">rendered = </span><span class="nx">_</span><span class="p">.</span><span class="nx">map</span> <span class="nx">childViews</span><span class="p">,</span> <span class="nf">(v)-&gt;</span>
+        <span class="nx">v</span><span class="p">.</span><span class="nx">render</span><span class="p">()</span>
+      <span class="k">new</span> <span class="nx">Handlebars</span><span class="p">.</span><span class="nx">SafeString</span> <span class="nx">@span</span><span class="p">(</span> <span class="nx">rendered</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;\n&quot;</span><span class="p">)</span> <span class="p">)</span>
+  
+  <span class="nx">setup</span><span class="p">(</span><span class="nx">collection</span><span class="p">,</span> <span class="nx">view</span><span class="p">,</span> <span class="nx">views</span><span class="p">)</span>
+  
+  <span class="nx">collection</span><span class="p">.</span><span class="nx">bind</span> <span class="s2">&quot;refresh&quot;</span><span class="p">,</span> <span class="nf">()-&gt;</span>
+    <span class="k">if</span> <span class="nx">execContext</span><span class="p">.</span><span class="nx">isAlive</span><span class="p">()</span></pre></div>             </td>           </tr>                               <tr id="section-37">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-37">&#182;</a>               </div>               <p>dump everything and resetup the view
+Call make alive to keep track of new views.</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nv">views = </span><span class="p">{}</span>
+      <span class="nx">setup</span><span class="p">(</span><span class="nx">collection</span><span class="p">,</span> <span class="nx">view</span><span class="p">,</span> <span class="nx">views</span><span class="p">)</span>
+      <span class="nx">view</span><span class="p">.</span><span class="nx">rerender</span><span class="p">()</span>
+      <span class="nx">execContext</span><span class="p">.</span><span class="nx">makeAlive</span><span class="p">()</span>
+  <span class="nx">collection</span><span class="p">.</span><span class="nx">bind</span> <span class="s2">&quot;add&quot;</span><span class="p">,</span> <span class="nf">(m)-&gt;</span>
+    <span class="k">if</span> <span class="nx">execContext</span><span class="p">.</span><span class="nx">isAlive</span><span class="p">()</span></pre></div>             </td>           </tr>                               <tr id="section-38">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-38">&#182;</a>               </div>               <p>create the new view as needed
+Call make alive to keep track of new views.</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nv">mview = </span><span class="nx">item_view</span> <span class="nx">m</span>
+      <span class="nx">views</span><span class="p">[</span><span class="nx">m</span><span class="p">.</span><span class="nx">cid</span><span class="p">]</span> <span class="o">=</span> <span class="nx">mview</span>
+      <span class="nx">view</span><span class="p">.</span><span class="nx">live</span><span class="p">().</span><span class="nx">append</span><span class="p">(</span><span class="nx">mview</span><span class="p">.</span><span class="nx">render</span><span class="p">())</span>
+      <span class="nx">execContext</span><span class="p">.</span><span class="nx">makeAlive</span><span class="p">()</span>
+  <span class="nx">collection</span><span class="p">.</span><span class="nx">bind</span> <span class="s2">&quot;remove&quot;</span><span class="p">,</span> <span class="nf">(m)-&gt;</span>
+    <span class="k">if</span> <span class="nx">execContext</span><span class="p">.</span><span class="nx">isAlive</span><span class="p">()</span></pre></div>             </td>           </tr>                               <tr id="section-39">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-39">&#182;</a>               </div>               <p>remove the view associated with the model
+Stop tracking this view.</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nv">mview = </span><span class="nx">views</span><span class="p">[</span><span class="nx">m</span><span class="p">.</span><span class="nx">cid</span><span class="p">]</span>
+      <span class="nx">mview</span><span class="p">.</span><span class="nx">live</span><span class="p">().</span><span class="nx">remove</span><span class="p">()</span>
+      <span class="nx">execContext</span><span class="p">.</span><span class="nx">removeView</span> <span class="nx">mview</span>
+
+  <span class="nx">view</span><span class="p">.</span><span class="nx">render</span><span class="p">()</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 
