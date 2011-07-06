@@ -29,10 +29,15 @@ Backrub =
   # simply follow the path, you need to call get on the model.
   #
   _resolveValue : (attr, model)->
+    parts = attr.split(/\.(.+)?/)
+    if parts.length > 1
+      model = Backrub._resolveValue(parts[0], model)
+      attr = parts[1]
     model_info = Backrub._resolveIsModel attr, model
     if model_info.is_model
       model_info.model.get(model_info.attr)
     else if model_info.is_model is null
+      console.log attr
       attr
     else
       value = try
@@ -51,6 +56,9 @@ Backrub =
       is_model = true
       model = model.model
       attr.substring(1)
+    else if attr and model and model.get and model.get(attr) isnt undefined
+      is_model = true
+      attr
     else if attr and model.model and model.model.get and model.model.get(attr) isnt undefined
       is_model = true
       model = model.model
@@ -63,7 +71,8 @@ Backrub =
       attr
 
     #
-    # return an object with a convenient bind method that check the presence of a model
+    # return an object with a convenient bind method that check the
+    # presence of a model
     #
     is_model: is_model
     attr: attr
