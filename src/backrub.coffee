@@ -37,7 +37,6 @@ Backrub =
     if model_info.is_model
       model_info.model.get(model_info.attr)
     else if model_info.is_model is null
-      console.log attr
       attr
     else
       value = try
