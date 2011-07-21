@@ -14,7 +14,7 @@ Backrub =
     _.each parts, (p)->
       prev = base
       base = if p is "" then base else base[p]
-      if !base
+      if not base?
         throw new Error "cannot find given path '#{path}'"
         return {}
     if typeof( base ) is "function" and wrap
@@ -341,7 +341,7 @@ Handlebars.registerHelper "view", (viewName, context)->
   view = Backrub._getPath(viewName)
   resolvedOptions = {}
   for key, val of context.hash
-    resolvedOptions[key] = Backrub._resolveValue(val, this) || val
+    resolvedOptions[key] = Backrub._resolveValue(val, this) ? val
 
   v = Backrub._createView view, resolvedOptions
   execContext.addView v
